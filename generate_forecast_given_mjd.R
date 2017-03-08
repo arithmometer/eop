@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+library(methods)
 
 args = commandArgs(trailingOnly=TRUE)
 start.forecast <- as.integer(args[1])
@@ -32,17 +33,21 @@ find.n <- function(coord, start, end, L, n, len, type, steps) {
     x[[i + 1]] <- c04[(r + 1):(r + len), coord]
   }
   
-  dists <- parLapply(cl, 1:n, function(num) {
+  dists <- c()
+  for(num in 1:n) {
     r <- c()
     for(i in 0:(steps - 1)) {
       rf <- rforecast(s[[i + 1]], groups = list(1:num), len = len, only.new = TRUE)
       r <- c(r, MSE(rf, x[[i + 1]], len))
     }
-    ifelse(type == "mean", mean(r), median(r))
-  })
+    dists <- c(dists, ifelse(type == "mean", mean(r), median(r)))
+    rm(r)
+    gc()
+  }
   rm(x, s)
   gc()
-  return(which.min(unlist(dists)))
+  
+  return(which.min(dists))
 }
 
 get.forecast <- function(start.forecast, len, L, lodL, dL, pn, lodn, dpn, years, dyears, steps) {
