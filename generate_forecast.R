@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+library(methods)
 date.string <- format(Sys.time(), "%Y-%m-%d")
 
 # put to start.forecast MJD of today
@@ -17,6 +18,24 @@ c04 <- read.table("eopc04_IAU2000.62-now.txt", comment.char = "#", skip = 14)
 colnames(c04) <- c("Year", "Month", "Day", "MJD", "x", "y", "UT1-UTC", "LOD",
                    "dX", "dY", "x Err", "y Err", "UT1-UTC err", "LOD err", "dX err", "dY err")
 
+finals2000 <- read.csv(paste("csv/", start.forecast - 1, "/finals2000A.daily.csv", sep=""), sep=";")
+
+last.mjd.c04 <- c04[dim(c04)[1], "MJD"]
+mjd.from <- last.mjd.c04 + 1
+mjd.to <- start.forecast - 1
+ind.from <- which(finals2000["MJD"] == mjd.from)
+ind.to <- which(finals2000["MJD"] == mjd.to)
+
+gap.df <- data.frame("MJD"=mjd.from:mjd.to,
+                     "x"=finals2000[ind.from:ind.to, "x_pole"],
+                     "y"=finals2000[ind.from:ind.to, "y_pole"],
+                     "LOD"=finals2000[ind.from:ind.to, "LOD"] / 1000,
+                     "dX"=finals2000[ind.from:ind.to, "dX"] / 1000,
+                     "dY"=finals2000[ind.from:ind.to, "dY"] / 1000)
+gap.df[31, "LOD"] <- gap.df[30, "LOD"]
+
+c04 <- rbind(c04[, c("MJD", "x", "y", "LOD", "dX", "dY")], gap.df)
+
 MSE <- function(a, b, n) {
   sum((a - b)**2) / n
 }
@@ -31,17 +50,21 @@ find.n <- function(coord, start, end, L, n, len, type, steps) {
     x[[i + 1]] <- c04[(r + 1):(r + len), coord]
   }
   
-  dists <- parLapply(cl, 1:n, function(num) {
+  dists <- c()
+  for(num in 1:n) {
     r <- c()
     for(i in 0:(steps - 1)) {
       rf <- rforecast(s[[i + 1]], groups = list(1:num), len = len, only.new = TRUE)
       r <- c(r, MSE(rf, x[[i + 1]], len))
     }
-    ifelse(type == "mean", mean(r), median(r))
-  })
+    dists <- c(dists, ifelse(type == "mean", mean(r), median(r)))
+    rm(r)
+    gc()
+  }
   rm(x, s)
   gc()
-  return(which.min(unlist(dists)))
+  
+  return(which.min(dists))
 }
 
 get.forecast <- function(start.forecast, len, L, lodL, dL, pn, lodn, dpn, years, dyears, steps) {
