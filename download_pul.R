@@ -7,6 +7,7 @@ get_file <- function(filename, url) {
   }
 }
 
+date.string <- format(Sys.time(), "%Y-%m-%d")
 mjd <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
 
 am.filename <- paste(mjd - 1, "_am_pul.txt", sep="")
