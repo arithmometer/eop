@@ -91,13 +91,13 @@ server <- function(input, output, clientData, session) {
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "x"], type="l", xlab="MJD", ylab="Pole x")
     if("ssa" %in% input$displaySeries) {
-      lines(get_ssa()[1:365, "x"], col="blue", lwd=2)
+      lines(mjd:(mjd+364), get_ssa()[1:365, "x"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
-      lines(get_pul_am()[1:365, "x"], col="orange")
+      lines(mjd:(mjd+364), get_pul_am()[1:365, "x"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
-      lines(get_pul_e1()[1:365, "x"], col="green")
+      lines(mjd:(mjd+364), get_pul_e1()[1:365, "x"], col="green")
     }
     # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
     # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
@@ -108,13 +108,13 @@ server <- function(input, output, clientData, session) {
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "y"], type="l", xlab="MJD", ylab="Pole y")
     if("ssa" %in% input$displaySeries) {
-      lines(get_ssa()[1:365, "y"], col="blue", lwd=2)
+      lines(mjd:(mjd+364), get_ssa()[1:365, "y"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
-      lines(get_pul_am()[1:365, "y"], col="orange")
+      lines(mjd:(mjd+364), get_pul_am()[1:365, "y"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
-      lines(get_pul_e1()[1:365, "y"], col="green")
+      lines(mjd:(mjd+364), get_pul_e1()[1:365, "y"], col="green")
     }
     # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
     # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
@@ -125,13 +125,13 @@ server <- function(input, output, clientData, session) {
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "LOD"], type="l", xlab="MJD", ylab="LOD")
     if("ssa" %in% input$displaySeries) {
-      lines(get_ssa()[1:365, "LOD"], col="blue", lwd=2)
+      lines(mjd:(mjd+364), get_ssa()[1:365, "LOD"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
-      lines(get_pul_am()[1:365, "LOD"], col="orange")
+      lines(mjd:(mjd+364), get_pul_am()[1:365, "LOD"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
-      lines(get_pul_e1()[1:365, "LOD"], col="green")
+      lines(mjd:(mjd+364), get_pul_e1()[1:365, "LOD"], col="green")
     }
     # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
     # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
@@ -142,13 +142,13 @@ server <- function(input, output, clientData, session) {
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "dX"], type="l", xlab="MJD", ylab="dX")
     if("ssa" %in% input$displaySeries) {
-      lines(get_ssa()[1:365, "dX"], col="blue", lwd=2)
+      lines(mjd:(mjd+364), get_ssa()[1:365, "dX"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
-      lines(get_pul_am()[1:365, "dX"], col="orange")
+      lines(mjd:(mjd+364), get_pul_am()[1:365, "dX"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
-      lines(get_pul_e1()[1:365, "dX"], col="green")
+      lines(mjd:(mjd+364), get_pul_e1()[1:365, "dX"], col="green")
     }
     # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
     # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
@@ -159,17 +159,58 @@ server <- function(input, output, clientData, session) {
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "dY"], type="l", xlab="MJD", ylab="dY")
     if("ssa" %in% input$displaySeries) {
-      lines(get_ssa()[1:365, "x"], col="blue", lwd=2)
+      lines(mjd:(mjd+364), get_ssa()[1:365, "x"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
-      lines(get_pul_am()[1:365, "dY"], col="orange")
+      lines(mjd:(mjd+364), get_pul_am()[1:365, "dY"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
-      lines(get_pul_e1()[1:365, "dY"], col="green")
+      lines(mjd:(mjd+364), get_pul_e1()[1:365, "dY"], col="green")
     }
     # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
     # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
   })
+  
+  MSE <- function(a, b, n) {
+    sum((a - b)**2) / n
+  }
+  
+  output$comparison_table <- renderTable({
+    df <- data.frame(x=double(), y=double(), LOD=double(), dX=double(), dY=double())
+    mjd <- get_forecast_mjd()
+    ind <- mjd - 37664
+    if("ssa" %in% input$displaySeries) {
+      rn <- rownames(df)
+      df <- rbind(df, data.frame(
+                         x=  MSE(get_final()[(ind):(ind + 364), "x"],   get_ssa()[1:365, "x"], 365),
+                         y=  MSE(get_final()[(ind):(ind + 364), "y"],   get_ssa()[1:365, "y"], 365),
+                         LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], get_ssa()[1:365, "LOD"], 365),
+                         dX= MSE(get_final()[(ind):(ind + 364), "dX"],  get_ssa()[1:365, "dX"], 365),
+                         dY= MSE(get_final()[(ind):(ind + 364), "dY"],  get_ssa()[1:365, "dY"], 365)))
+      rownames(df) <- c(rn, "SSA")
+    }
+    if("pul_am" %in% input$displaySeries) {
+      rn <- rownames(df)
+      df <- rbind(df, data.frame(
+                         x=  MSE(get_final()[(ind):(ind + 364), "x"],   get_pul_am()[1:365, "x"], 365),
+                         y=  MSE(get_final()[(ind):(ind + 364), "y"],   get_pul_am()[1:365, "y"], 365),
+                         LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], get_pul_am()[1:365, "LOD"], 365),
+                         dX= MSE(get_final()[(ind):(ind + 364), "dX"],  get_pul_am()[1:365, "dX"], 365),
+                         dY= MSE(get_final()[(ind):(ind + 364), "dY"],  get_pul_am()[1:365, "dY"], 365)))
+      rownames(df) <- c(rn, "Pul AM")
+    }
+    if("pul_e1" %in% input$displaySeries) {
+      rn <- rownames(df)
+      df <- rbind(df, data.frame(
+                         x=  MSE(get_final()[(ind):(ind + 364), "x"],   get_pul_e1()[1:365, "x"], 365),
+                         y=  MSE(get_final()[(ind):(ind + 364), "y"],   get_pul_e1()[1:365, "y"], 365),
+                         LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], get_pul_e1()[1:365, "LOD"], 365),
+                         dX= MSE(get_final()[(ind):(ind + 364), "dX"],  get_pul_e1()[1:365, "dX"], 365),
+                         dY= MSE(get_final()[(ind):(ind + 364), "dY"],  get_pul_e1()[1:365, "dY"], 365)))
+      rownames(df) <- c(rn, "Pul E1")
+    }
+    df
+  }, include.rownames=TRUE, digits=10)
 }
 
 ui = tagList(
@@ -217,6 +258,9 @@ ui = tagList(
                )
              ),
              mainPanel(
+               h4("MSE"),
+               tableOutput('comparison_table'),
+               tags$hr(),
                h4("Pole x"),
                plotOutput("x_comparison"),
                h4("Pole y"),
