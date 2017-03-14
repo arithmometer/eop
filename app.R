@@ -246,9 +246,9 @@ ui = tagList(
     ),
     tabPanel("Compare Forecasts",
              sidebarPanel(
-               p("Date input is limited between 26.08.2010 and 4.02.2017"),
+               p("Date input is limited between 26.08.2010 and 1.02.2016"),
                tags$hr(),
-               dateInput("date_compare", label="Choose starting date", value="2017-02-04",
+               dateInput("date_compare", label="Choose starting date", value="2016-02-01",
                          min="2010-08-26", max="2017-02-04",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
