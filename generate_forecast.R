@@ -104,6 +104,10 @@ get.forecast <- function(start.forecast, len, L, lodL, dL, pn, lodn, dpn, years,
   rf.dy <- rforecast(s.dy, groups = list(c(1:dyp)), len = len, only.new = TRUE)
   
   print(paste("len =", len, "; L =", L, lodL, dL, ":", xp, yp, lodp, dxp, dyp, sep = " "))
+  param.file.name <- paste(len, "params.txt", sep="_")
+  paramfile <- file(param.file.name, open = 'wt')
+  writeLines(paste(L, lodL, dL, xp, yp, lodp, dxp, dyp, sep=","), con = paramfile)
+  close(paramfile)
   df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = rf.x, y = rf.y, LOD = rf.lod, dX = rf.dx, dY = rf.dy)
 }
 

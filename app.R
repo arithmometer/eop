@@ -11,10 +11,38 @@ server <- function(input, output, clientData, session) {
     mjd_today()
   })
   
-  output$download_link_today_365 <- reactive({
-    tags$a(href = paste('ssa/', mjd_today(), '_ssa_spbu_365.txt', sep=""),
-      paste(mjd_today(), '_ssa_spbu_365.txt', sep=""))
-  })
+  output$downloadForecast365 <- downloadHandler(
+    filename <- function() {
+      paste(mjd_today(), "_ssa_spbu_365.txt", sep="")
+    },
+    
+    content <- function(file) {
+      file.copy(paste(mjd_today(), "_ssa_spbu_365.txt", sep=""), file)
+    },
+    contentType = "application/txt"
+  )
+  
+  output$downloadForecast365 <- downloadHandler(
+    filename <- function() {
+      paste(mjd_today(), "_ssa_spbu_365.txt", sep="")
+    },
+    
+    content <- function(file) {
+      file.copy(paste("ssa/", mjd_today(), "_ssa_spbu_365.txt", sep=""), file)
+    },
+    contentType = "text/plain"
+  )
+  
+  output$downloadForecast90 <- downloadHandler(
+    filename <- function() {
+      paste(mjd_today(), "_ssa_spbu_90.txt", sep="")
+    },
+    
+    content <- function(file) {
+      file.copy(paste("ssa/", mjd_today(), "_ssa_spbu_90.txt", sep=""), file)
+    },
+    contentType = "text/plain"
+  )
   
   get_ssa_today <- reactive({
     ssa.forecast <- read.table(paste("ssa/", mjd_today(), "_ssa_spbu_365.txt", sep=""))
@@ -225,23 +253,34 @@ ui = tagList(
                p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
                tags$hr(),
                p("Download forecasts:"),
-               p("links will appear here"),
-               # tags$br(),
-               # uiOutput("download_link_today_365"),
-               # textOutput("mjd"),
+               downloadButton("downloadForecast90", label = "Download 90 days"),
+               tags$br(),
+               downloadButton("downloadForecast365", label = "Download 365 days"),
                tags$br()
              ),
              mainPanel(
-               h4("Pole x"),
-               plotOutput("x_today"),
-               h4("Pole y"),
-               plotOutput("y_today"),
-               h4("LOD"),
-               plotOutput("lod_today"),
-               h4("dX"),
-               plotOutput("dx_today"),
-               h4("dY"),
-               plotOutput("dy_today")
+               tabsetPanel(type = "tabs", 
+                           tabPanel("Pole x", {
+                             h4("Pole x")
+                             plotOutput("x_today")
+                           }), 
+                           tabPanel("Pole y", {
+                             h4("Pole y")
+                             plotOutput("y_today")
+                           }),
+                           tabPanel("LOD", {
+                             h4("LOD")
+                             plotOutput("lod_today")
+                           }),
+                           tabPanel("dX", {
+                             h4("dX")
+                             plotOutput("dx_today")
+                           }),
+                           tabPanel("dY", {
+                             h4("dY")
+                             plotOutput("dy_today")
+                           })
+               )
              )
     ),
     tabPanel("Compare Forecasts",
