@@ -110,73 +110,109 @@ server <- function(input, output, clientData, session) {
   })
   
   output$y_today <- renderPlot({
-    plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "y"], type="l", ylab="y pole", xlab="MJD")
+    if(input$"mjd_labels") {
+      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "y"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+    } else {
+      start.date <- mjd_to_date(mjd_today())
+      d <- seq(start.date, start.date + 364, by = "days")
+      plot(d, get_ssa_today()[, "y"], type="l", ylab="x pole", xlab="", xaxt='n')
+      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
+                cex.axis=0.7, las=2)  
+    }
   })
   
   output$lod_today <- renderPlot({
-    plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "LOD"], type="l", ylab="LOD", xlab="MJD")
+    if(input$"mjd_labels") {
+      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "LOD"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+    } else {
+      start.date <- mjd_to_date(mjd_today())
+      d <- seq(start.date, start.date + 364, by = "days")
+      plot(d, get_ssa_today()[, "LOD"], type="l", ylab="x pole", xlab="", xaxt='n')
+      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
+                cex.axis=0.7, las=2)  
+    }
   })
   
   output$dx_today <- renderPlot({
-    plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "dX"], type="l", ylab="dX", xlab="MJD")
+    if(input$"mjd_labels") {
+      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "dX"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+    } else {
+      start.date <- mjd_to_date(mjd_today())
+      d <- seq(start.date, start.date + 364, by = "days")
+      plot(d, get_ssa_today()[, "dX"], type="l", ylab="x pole", xlab="", xaxt='n')
+      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
+                cex.axis=0.7, las=2)  
+    }
   })
   
   output$dy_today <- renderPlot({
-    plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "dY"], type="l", ylab="dX", xlab="MJD")
+    if(input$"mjd_labels") {
+      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "dY"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+    } else {
+      start.date <- mjd_to_date(mjd_today())
+      d <- seq(start.date, start.date + 364, by = "days")
+      plot(d, get_ssa_today()[, "dY"], type="l", ylab="x pole", xlab="", xaxt='n')
+      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
+                cex.axis=0.7, las=2)  
+    }
   })
   
   output$x_dists_365 <- renderPlot({
-    dists <- read.csv("365_x_dists.txt")
+    dists <- read.csv("ssa/params/dists_x_365.txt")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   output$y_dists_365 <- renderPlot({
-    dists <- read.csv("365_y_dists.txt")
+    dists <- read.csv("ssa/params/dists_y_365.txt")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   output$lod_dists_365 <- renderPlot({
-    dists <- read.csv("365_LOD_dists.txt")
+    dists <- read.csv("ssa/params/dists_LOD_365.txt")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   output$dx_dists_365 <- renderPlot({
-    dists <- read.csv("365_dX_dists.txt")
+    dists <- read.csv("ssa/params/dists_dX_365.txt")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   output$dy_dists_365 <- renderPlot({
-    dists <- read.csv("365_dY_dists.txt")
+    dists <- read.csv("ssa/params/dists_dY_365.txt")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
-  get_params <- reactive({
-    params <- read.csv("365_params.txt")
+  get_params_today <- reactive({
+    params <- read.csv("ssa/params/params_365.txt")
     params
   })
   
   output$x_params_365 <- reactive({
-    params <- get_params()
+    params <- get_params_today()
     sprintf("L: %d\nneig: %d", params$L, params$xp)
   })
   
   output$y_params_365 <- reactive({
-    params <- get_params()
+    params <- get_params_today()
     sprintf("L: %d\nneig: %d", params$L, params$yp)
   })
   
   output$lod_params_365 <- reactive({
-    params <- get_params()
+    params <- get_params_today()
     sprintf("L: %d\nneig: %d", params$lodL, params$lodp)
   })
   
   output$dx_params_365 <- reactive({
-    params <- get_params()
+    params <- get_params_today()
     sprintf("L: %d\nneig: %d", params$dL, params$dxp)
   })
   
   output$dy_params_365 <- reactive({
-    params <- get_params()
+    params <- get_params_today()
     sprintf("L: %d\nneig: %d", params$dL, params$dyp)
   })
   

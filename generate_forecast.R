@@ -64,7 +64,7 @@ find.n <- function(coord, start, end, L, n, len, type, steps) {
   rm(x, s)
   gc()
 
-  write.csv(dists, paste(len, coord, "dists.txt", sep="_"))
+  write.csv(dists, paste("ssa/params/", "dists_", coord, "_", len, ".txt", sep=""))
   
   return(which.min(dists))
 }
@@ -108,7 +108,7 @@ get.forecast <- function(start.forecast, len, L, lodL, dL, pn, lodn, dpn, years,
   print(paste("len =", len, "; L =", L, lodL, dL, ":", xp, yp, lodp, dxp, dyp, sep = " "))
 
   write.csv(data.frame("L"=L, "lodL"=lodL, "dL"=dL, "xp"=xp, "yp"=yp, "lodp"=lodp, "dxp"=dxp, "dyp"=dyp),
-            paste(len, "params.txt", sep="_"))
+            paste("ssa/params/params_", len, ".txt", sep=""))
   
   df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = rf.x, y = rf.y, LOD = rf.lod, dX = rf.dx, dY = rf.dy)
 }
