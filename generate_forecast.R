@@ -63,7 +63,11 @@ find.n <- function(coord, start, end, L, n, len, type, steps) {
   }
   rm(x, s)
   gc()
-  
+
+  fileConn <- file(paste(len, coord, "dists.txt", sep="_"))
+  writeLines(as.character(dists), fileConn, sep=',')
+  close(fileConn)
+
   return(which.min(dists))
 }
 
