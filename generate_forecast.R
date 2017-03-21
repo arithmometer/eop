@@ -64,10 +64,8 @@ find.n <- function(coord, start, end, L, n, len, type, steps) {
   rm(x, s)
   gc()
 
-  fileConn <- file(paste(len, coord, "dists.txt", sep="_"))
-  writeLines(as.character(dists), fileConn, sep=',')
-  close(fileConn)
-
+  write.csv(dists, paste(len, coord, "dists.txt", sep="_"))
+  
   return(which.min(dists))
 }
 
@@ -108,10 +106,10 @@ get.forecast <- function(start.forecast, len, L, lodL, dL, pn, lodn, dpn, years,
   rf.dy <- rforecast(s.dy, groups = list(c(1:dyp)), len = len, only.new = TRUE)
   
   print(paste("len =", len, "; L =", L, lodL, dL, ":", xp, yp, lodp, dxp, dyp, sep = " "))
-  param.file.name <- paste(len, "params.txt", sep="_")
-  paramfile <- file(param.file.name, open = 'wt')
-  writeLines(paste(L, lodL, dL, xp, yp, lodp, dxp, dyp, sep=","), con = paramfile)
-  close(paramfile)
+
+  write.csv(data.frame("L"=L, "lodL"=lodL, "dL"=dL, "xp"=xp, "yp"=yp, "lodp"=lodp, "dxp"=dxp, "dyp"=dyp),
+            paste(len, "params.txt", sep="_"))
+  
   df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = rf.x, y = rf.y, LOD = rf.lod, dX = rf.dx, dY = rf.dy)
 }
 
@@ -142,3 +140,4 @@ my.write(format(df.365, scientific = FALSE), file = output.file.name.365,
 my.write(format(df.90, scientific = FALSE), file = output.file.name.90,
          header = "# MJD\t\t\tx\t\t\ty\t\t\tLOD\t\t\tdX\t\t\tdY",
          row.names=FALSE, col.names = FALSE, sep = "\t", quote = FALSE)
+

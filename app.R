@@ -11,6 +11,10 @@ server <- function(input, output, clientData, session) {
     mjd_today()
   })
   
+  mjd_to_date <- function(mjd) {
+    as.Date("1858-11-17") + mjd
+  }
+  
   output$downloadForecast365 <- downloadHandler(
     filename <- function() {
       paste(mjd_today(), "_ssa_spbu_365.txt", sep="")
@@ -93,9 +97,16 @@ server <- function(input, output, clientData, session) {
   })
   
   output$x_today <- renderPlot({
-    plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="MJD")
-    # start.date <- input$dateCompare
-    # axis.Date(1, at=seq(as.Date(start.date), as.Date(start.date) + 365, by = "1 month"), format="%d-%m-%Y", cex.axis=0.7)
+    if(input$"mjd_labels") {
+      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+    } else {
+      start.date <- mjd_to_date(mjd_today())
+      d <- seq(start.date, start.date + 364, by = "days")
+      plot(d, get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="", xaxt='n')
+      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
+                cex.axis=0.7, las=2)  
+    }
   })
   
   output$y_today <- renderPlot({
@@ -112,6 +123,61 @@ server <- function(input, output, clientData, session) {
   
   output$dy_today <- renderPlot({
     plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "dY"], type="l", ylab="dX", xlab="MJD")
+  })
+  
+  output$x_dists_365 <- renderPlot({
+    dists <- read.csv("365_x_dists.txt")
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  
+  output$y_dists_365 <- renderPlot({
+    dists <- read.csv("365_y_dists.txt")
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  
+  output$lod_dists_365 <- renderPlot({
+    dists <- read.csv("365_LOD_dists.txt")
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  
+  output$dx_dists_365 <- renderPlot({
+    dists <- read.csv("365_dX_dists.txt")
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  
+  output$dy_dists_365 <- renderPlot({
+    dists <- read.csv("365_dY_dists.txt")
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  
+  get_params <- reactive({
+    params <- read.csv("365_params.txt")
+    params
+  })
+  
+  output$x_params_365 <- reactive({
+    params <- get_params()
+    sprintf("L: %d\nneig: %d", params$L, params$xp)
+  })
+  
+  output$y_params_365 <- reactive({
+    params <- get_params()
+    sprintf("L: %d\nneig: %d", params$L, params$yp)
+  })
+  
+  output$lod_params_365 <- reactive({
+    params <- get_params()
+    sprintf("L: %d\nneig: %d", params$lodL, params$lodp)
+  })
+  
+  output$dx_params_365 <- reactive({
+    params <- get_params()
+    sprintf("L: %d\nneig: %d", params$dL, params$dxp)
+  })
+  
+  output$dy_params_365 <- reactive({
+    params <- get_params()
+    sprintf("L: %d\nneig: %d", params$dL, params$dyp)
   })
   
   output$x_comparison <- renderPlot({
@@ -187,7 +253,7 @@ server <- function(input, output, clientData, session) {
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "dY"], type="l", xlab="MJD", ylab="dY")
     if("ssa" %in% input$displaySeries) {
-      lines(mjd:(mjd+364), get_ssa()[1:365, "x"], col="blue", lwd=2)
+      lines(mjd:(mjd+364), get_ssa()[1:365, "dY"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
       lines(mjd:(mjd+364), get_pul_am()[1:365, "dY"], col="orange")
@@ -249,6 +315,7 @@ ui = tagList(
              sidebarPanel(
                h4("MJD of today"),
                verbatimTextOutput("mjd"),
+               checkboxInput("mjd_labels", "MJD labels", FALSE),
                tags$hr(),
                p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
                tags$hr(),
@@ -260,26 +327,51 @@ ui = tagList(
              ),
              mainPanel(
                tabsetPanel(type = "tabs", 
-                           tabPanel("Pole x", {
-                             h4("Pole x")
-                             plotOutput("x_today")
-                           }), 
-                           tabPanel("Pole y", {
-                             h4("Pole y")
-                             plotOutput("y_today")
-                           }),
-                           tabPanel("LOD", {
-                             h4("LOD")
-                             plotOutput("lod_today")
-                           }),
-                           tabPanel("dX", {
-                             h4("dX")
-                             plotOutput("dx_today")
-                           }),
-                           tabPanel("dY", {
-                             h4("dY")
-                             plotOutput("dy_today")
-                           })
+                           tabPanel("Pole x",
+                             h4("Choice of parameters for this forecast:"),
+                             verbatimTextOutput("x_params_365"),
+                             h4("Pole x"),
+                             plotOutput("x_today"),
+                             tags$br(),
+                             h4("MSE"),
+                             plotOutput("x_dists_365")
+                           ), 
+                           tabPanel("Pole y",
+                             h4("Choice of parameters for this forecast:"),
+                             verbatimTextOutput("y_params_365"),
+                             h4("Pole y"),
+                             plotOutput("y_today"),
+                             tags$br(),
+                             h4("MSE"),
+                             plotOutput("y_dists_365")
+                           ),
+                           tabPanel("LOD",
+                             h4("Choice of parameters for this forecast:"),
+                             verbatimTextOutput("lod_params_365"),
+                             h4("LOD"),
+                             plotOutput("lod_today"),
+                             tags$br(),
+                             h4("MSE"),
+                             plotOutput("lod_dists_365")
+                           ),
+                           tabPanel("dX",
+                             h4("Choice of parameters for this forecast:"),
+                             verbatimTextOutput("dx_params_365"),
+                             h4("dX"),
+                             plotOutput("dx_today"),
+                             tags$br(),
+                             h4("MSE"),
+                             plotOutput("dx_dists_365")
+                           ),
+                           tabPanel("dY",
+                             h4("Choice of parameters for this forecast:"),
+                             verbatimTextOutput("dy_params_365"),
+                             h4("dY"),
+                             plotOutput("dy_today"),
+                             tags$br(),
+                             h4("MSE"),
+                             plotOutput("dy_dists_365")
+                           )
                )
              )
     ),
@@ -287,7 +379,7 @@ ui = tagList(
              sidebarPanel(
                p("Date input is limited between 26.08.2010 and 1.02.2016"),
                tags$hr(),
-               dateInput("date_compare", label="Choose starting date", value="2016-02-01",
+               dateInput("date_compare", label="Choose starting date", value="2010-08-26",
                          min="2010-08-26", max="2017-02-04",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
