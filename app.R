@@ -180,89 +180,107 @@ server <- function(input, output, clientData, session) {
     sprintf("L: %d\nneig: %d", params$dL, params$dyp)
   })
   
+  legend.names <- c("C04", "SSA", "Pul AM", "Pul E1")
+  legend.colors <- c("black", "blue", "orange", "green")
+  
   output$x_comparison <- renderPlot({
+    chosen <- c(TRUE, FALSE, FALSE, FALSE)
     mjd <- get_forecast_mjd()
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "x"], type="l", xlab="MJD", ylab="Pole x")
     if("ssa" %in% input$displaySeries) {
+      chosen[2] <- TRUE
       lines(mjd:(mjd+364), get_ssa()[1:365, "x"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
+      chosen[3] <- TRUE
       lines(mjd:(mjd+364), get_pul_am()[1:365, "x"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
+      chosen[4] <- TRUE
       lines(mjd:(mjd+364), get_pul_e1()[1:365, "x"], col="green")
     }
-    # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
-    # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
+    legend("topright", legend.names[chosen], col=legend.colors[chosen], lty=1, bty='n', cex=1.25, xpd=TRUE)
   })
   
   output$y_comparison <- renderPlot({
+    chosen <- c(TRUE, FALSE, FALSE, FALSE)
     mjd <- get_forecast_mjd()
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "y"], type="l", xlab="MJD", ylab="Pole y")
     if("ssa" %in% input$displaySeries) {
+      chosen[2] <- TRUE
       lines(mjd:(mjd+364), get_ssa()[1:365, "y"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
+      chosen[3] <- TRUE
       lines(mjd:(mjd+364), get_pul_am()[1:365, "y"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
+      chosen[4] <- TRUE
       lines(mjd:(mjd+364), get_pul_e1()[1:365, "y"], col="green")
     }
-    # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
-    # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
+    legend("topright", legend.names[chosen], col=legend.colors[chosen], lty=1, bty='n', cex=1.25, xpd=TRUE)
   })
   
   output$lod_comparison <- renderPlot({
+    chosen <- c(TRUE, FALSE, FALSE, FALSE)
     mjd <- get_forecast_mjd()
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "LOD"], type="l", xlab="MJD", ylab="LOD")
     if("ssa" %in% input$displaySeries) {
+      chosen[2] <- TRUE
       lines(mjd:(mjd+364), get_ssa()[1:365, "LOD"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
+      chosen[3] <- TRUE
       lines(mjd:(mjd+364), get_pul_am()[1:365, "LOD"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
+      chosen[4] <- TRUE
       lines(mjd:(mjd+364), get_pul_e1()[1:365, "LOD"], col="green")
     }
-    # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
-    # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
+    legend("topright", legend.names[chosen], col=legend.colors[chosen], lty=1, bty='n', cex=1.25, xpd=TRUE)
   })
   
   output$dx_comparison <- renderPlot({
+    chosen <- c(TRUE, FALSE, FALSE, FALSE)
     mjd <- get_forecast_mjd()
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "dX"], type="l", xlab="MJD", ylab="dX")
     if("ssa" %in% input$displaySeries) {
+      chosen[2] <- TRUE
       lines(mjd:(mjd+364), get_ssa()[1:365, "dX"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
+      chosen[3] <- TRUE
       lines(mjd:(mjd+364), get_pul_am()[1:365, "dX"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
+      chosen[4] <- TRUE
       lines(mjd:(mjd+364), get_pul_e1()[1:365, "dX"], col="green")
     }
-    # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
-    # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
+    legend("topright", legend.names[chosen], col=legend.colors[chosen], lty=1, bty='n', cex=1.25, xpd=TRUE)
   })
   
   output$dy_comparison <- renderPlot({
+    chosen <- c(TRUE, FALSE, FALSE, FALSE)
     mjd <- get_forecast_mjd()
     ind <- mjd - 37664
     plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), "dY"], type="l", xlab="MJD", ylab="dY")
     if("ssa" %in% input$displaySeries) {
+      chosen[2] <- TRUE
       lines(mjd:(mjd+364), get_ssa()[1:365, "dY"], col="blue", lwd=2)
     }
     if("pul_am" %in% input$displaySeries) {
+      chosen[3] <- TRUE
       lines(mjd:(mjd+364), get_pul_am()[1:365, "dY"], col="orange")
     }
     if("pul_e1" %in% input$displaySeries) {
+      chosen[4] <- TRUE
       lines(mjd:(mjd+364), get_pul_e1()[1:365, "dY"], col="green")
     }
-    # legend("topright", inset = c(-0.33, 0), legend.names[chosen],
-    # col = legend.colors[chosen], lty = 1, bty = 'n', cex = .75, xpd = TRUE)
+    legend("topright", legend.names[chosen], col=legend.colors[chosen], lty=1, bty='n', cex=1.25, xpd=TRUE)
   })
   
   MSE <- function(a, b, n) {
@@ -377,9 +395,9 @@ ui = tagList(
     ),
     tabPanel("Compare Forecasts",
              sidebarPanel(
-               p("Date input is limited between 26.08.2010 and 1.02.2016"),
+               p("Date input is limited between 27.08.2010 and 1.02.2016"),
                tags$hr(),
-               dateInput("date_compare", label="Choose starting date", value="2010-08-26",
+               dateInput("date_compare", label="Choose starting date", value="2010-08-27",
                          min="2010-08-26", max="2017-02-04",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
