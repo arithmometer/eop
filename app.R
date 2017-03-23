@@ -161,59 +161,132 @@ server <- function(input, output, clientData, session) {
     }
   })
   
-  output$x_dists_365 <- renderPlot({
-    dists <- read.csv("ssa/params/dists_x_365.txt")
+  output$x_dists_365_400 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_400_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$x_dists_365_500 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_500_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$x_dists_365_550 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_550_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$x_dists_365_600 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_600_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$x_dists_365_650 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_650_dists.csv", sep=""))
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
-  output$y_dists_365 <- renderPlot({
-    dists <- read.csv("ssa/params/dists_y_365.txt")
+  output$y_dists_365_400 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_400_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$y_dists_365_500 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_500_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$y_dists_365_550 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_550_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$y_dists_365_600 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_600_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$y_dists_365_650 <- renderPlot({
+    print(mjd_today())
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_650_dists.csv", sep=""))
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
-  output$lod_dists_365 <- renderPlot({
-    dists <- read.csv("ssa/params/dists_LOD_365.txt")
+  output$lod_dists_365_2700 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2700_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$lod_dists_365_2750 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2750_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$lod_dists_365_2800 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2800_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$lod_dists_365_2850 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2850_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$lod_dists_365_3000 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_3000_dists.csv", sep=""))
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
-  output$dx_dists_365 <- renderPlot({
-    dists <- read.csv("ssa/params/dists_dX_365.txt")
+  output$dx_dists_365_250 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_250_dists.csv", sep=""))
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
-  
-  output$dy_dists_365 <- renderPlot({
-    dists <- read.csv("ssa/params/dists_dY_365.txt")
+  output$dx_dists_365_270 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_270_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$dx_dists_365_300 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_300_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$dx_dists_365_320 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_320_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+
+  output$dy_dists_365_250 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_250_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$dy_dists_365_270 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_270_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$dy_dists_365_300 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_300_dists.csv", sep=""))
+    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  })
+  output$dy_dists_365_320 <- renderPlot({
+    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_320_dists.csv", sep=""))
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   get_params_today <- reactive({
-    params <- read.csv("ssa/params/params_365.txt")
+    params <- read.csv(paste("ssa/params/", mjd_today(), "/365params.csv", sep=""))
     params
   })
   
   output$x_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$L, params$xp)
+    sprintf("L: %d\nneig: %d", params$x[1], params$x[2])
   })
   
   output$y_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$L, params$yp)
+    sprintf("L: %d\nneig: %d", params$y[1], params$y[2])
   })
   
   output$lod_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$lodL, params$lodp)
+    sprintf("L: %d\nneig: %d", params$LOD[1], params$LOD[2])
   })
   
   output$dx_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$dL, params$dxp)
+    sprintf("L: %d\nneig: %d", params$dX[1], params$dX[2])
   })
   
   output$dy_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$dL, params$dyp)
+    sprintf("L: %d\nneig: %d", params$dY[1], params$dY[2])
   })
   
   legend.names <- c("C04", "SSA", "Pul AM", "Pul E1")
@@ -388,7 +461,13 @@ ui = tagList(
                              plotOutput("x_today"),
                              tags$br(),
                              h4("MSE"),
-                             plotOutput("x_dists_365")
+                             tabsetPanel(type="tabs",
+                                         tabPanel("L = 400", plotOutput("x_dists_365_400")),
+                                         tabPanel("L = 500", plotOutput("x_dists_365_500")),
+                                         tabPanel("L = 550", plotOutput("x_dists_365_550")),
+                                         tabPanel("L = 600", plotOutput("x_dists_365_600")),
+                                         tabPanel("L = 650", plotOutput("x_dists_365_650"))
+                                         )
                            ), 
                            tabPanel("Pole y",
                              h4("Choice of parameters for this forecast:"),
@@ -397,7 +476,13 @@ ui = tagList(
                              plotOutput("y_today"),
                              tags$br(),
                              h4("MSE"),
-                             plotOutput("y_dists_365")
+                             tabsetPanel(type="tabs",
+                                         tabPanel("L = 400", plotOutput("y_dists_365_400")),
+                                         tabPanel("L = 500", plotOutput("y_dists_365_500")),
+                                         tabPanel("L = 550", plotOutput("y_dists_365_550")),
+                                         tabPanel("L = 600", plotOutput("y_dists_365_600")),
+                                         tabPanel("L = 650", plotOutput("y_dists_365_650"))
+                             )
                            ),
                            tabPanel("LOD",
                              h4("Choice of parameters for this forecast:"),
@@ -406,7 +491,13 @@ ui = tagList(
                              plotOutput("lod_today"),
                              tags$br(),
                              h4("MSE"),
-                             plotOutput("lod_dists_365")
+                             tabsetPanel(type="tabs",
+                                         tabPanel("L = 2700", plotOutput("lod_dists_365_2700")),
+                                         tabPanel("L = 2750", plotOutput("lod_dists_365_2750")),
+                                         tabPanel("L = 2800", plotOutput("lod_dists_365_2800")),
+                                         tabPanel("L = 2850", plotOutput("lod_dists_365_2850")),
+                                         tabPanel("L = 3000", plotOutput("lod_dists_365_3000"))
+                             )
                            ),
                            tabPanel("dX",
                              h4("Choice of parameters for this forecast:"),
@@ -415,7 +506,12 @@ ui = tagList(
                              plotOutput("dx_today"),
                              tags$br(),
                              h4("MSE"),
-                             plotOutput("dx_dists_365")
+                             tabsetPanel(type="tabs",
+                                         tabPanel("L = 250", plotOutput("dx_dists_365_250")),
+                                         tabPanel("L = 270", plotOutput("dx_dists_365_270")),
+                                         tabPanel("L = 300", plotOutput("dx_dists_365_300")),
+                                         tabPanel("L = 320", plotOutput("dx_dists_365_320"))
+                             )
                            ),
                            tabPanel("dY",
                              h4("Choice of parameters for this forecast:"),
@@ -424,7 +520,12 @@ ui = tagList(
                              plotOutput("dy_today"),
                              tags$br(),
                              h4("MSE"),
-                             plotOutput("dy_dists_365")
+                             tabsetPanel(type="tabs",
+                                         tabPanel("L = 250", plotOutput("dy_dists_365_250")),
+                                         tabPanel("L = 270", plotOutput("dy_dists_365_270")),
+                                         tabPanel("L = 300", plotOutput("dy_dists_365_300")),
+                                         tabPanel("L = 320", plotOutput("dy_dists_365_320"))
+                             )
                            )
                )
              )
