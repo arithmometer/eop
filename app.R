@@ -4,7 +4,7 @@ library(shinythemes)
 server <- function(input, output, clientData, session) {
   mjd_today <- reactive({
     date.string <- format(Sys.time(), "%Y-%m-%d")
-    as.integer(as.Date(date.string) - as.Date("1858-11-17"))
+    as.integer(as.Date(date.string) - as.Date("1858-11-17") - 1)
   })
   
   output$mjd <- reactive({
