@@ -27,3 +27,4 @@ gap.df[nrow(gap.df), "LOD"] <- gap.df[nrow(gap.df) - 1, "LOD"]
 c04 <- rbind(c04[, c("MJD", "x", "y", "LOD", "dX", "dY")], gap.df)
 
 source("generate.R")
+source("generate_today.R")

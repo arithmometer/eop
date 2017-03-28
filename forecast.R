@@ -50,6 +50,7 @@ find.Ln <- function(start.forecast, coord, start, end, L.list, pn, len, type, st
   mindist <- Inf
   for(L in L.list) {
     res <- find.n(start.forecast, coord, start, end, L, pn, len, "mean", steps)
+    print(res)
     if(res[[2]] < mindist) {
       mindist <- res[[2]]
       best.n <- res[[1]]
