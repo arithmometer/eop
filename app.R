@@ -2,13 +2,21 @@ library(shiny)
 library(shinythemes)
 
 server <- function(input, output, clientData, session) {
-  mjd_today <- reactive({
+  mjd.today <- reactive({
     date.string <- format(Sys.time(), "%Y-%m-%d")
     as.integer(as.Date(date.string) - as.Date("1858-11-17") - 1)
   })
   
   output$mjd <- reactive({
-    mjd_today()
+    mjd.today()
+  })
+  
+  forecast.mjd <- reactive({
+    read.csv("today/start_forecast.csv")$start.forecast
+  })
+  
+  output$forecast.mjd <- reactive({
+    forecast.mjd()
   })
   
   mjd_to_date <- function(mjd) {
@@ -17,39 +25,39 @@ server <- function(input, output, clientData, session) {
   
   output$downloadForecast365 <- downloadHandler(
     filename <- function() {
-      paste(mjd_today(), "_ssa_spbu_365.txt", sep="")
+      paste(forecast.mjd(), "_ssa_spbu_365.txt", sep="")
     },
     
     content <- function(file) {
-      file.copy(paste(mjd_today(), "_ssa_spbu_365.txt", sep=""), file)
+      file.copy(paste(forecast.mjd(), "_ssa_spbu_365.txt", sep=""), file)
     },
     contentType = "application/txt"
   )
   
   output$downloadForecast365 <- downloadHandler(
     filename <- function() {
-      paste(mjd_today(), "_ssa_spbu_365.txt", sep="")
+      paste(forecast.mjd(), "_ssa_spbu_365.txt", sep="")
     },
     
     content <- function(file) {
-      file.copy(paste("ssa/", mjd_today(), "_ssa_spbu_365.txt", sep=""), file)
+      file.copy(paste("ssa/", forecast.mjd(), "_ssa_spbu_365.txt", sep=""), file)
     },
     contentType = "text/plain"
   )
   
   output$downloadForecast90 <- downloadHandler(
     filename <- function() {
-      paste(mjd_today(), "_ssa_spbu_90.txt", sep="")
+      paste(forecast.mjd(), "_ssa_spbu_90.txt", sep="")
     },
     
     content <- function(file) {
-      file.copy(paste("ssa/", mjd_today(), "_ssa_spbu_90.txt", sep=""), file)
+      file.copy(paste("ssa/", forecast.mjd(), "_ssa_spbu_90.txt", sep=""), file)
     },
     contentType = "text/plain"
   )
   
   get_ssa_today <- reactive({
-    ssa.forecast <- read.table(paste("ssa/", mjd_today(), "_ssa_spbu_365.txt", sep=""))
+    ssa.forecast <- read.table("today/ssa_spbu_365.txt")
     colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
     ssa.forecast
   })
@@ -66,7 +74,7 @@ server <- function(input, output, clientData, session) {
     ssa.forecast
   })
 
-  # check if these files do not exist!
+  # check if these files do exist!
   get_pul_am <- reactive({
     mjd <- get_forecast_mjd()
     am_pul <- read.table(paste("pul/", mjd - 1, "_am_pul.txt", sep = ""), skip=1) # pul/55434_am_pul.txt
@@ -98,10 +106,10 @@ server <- function(input, output, clientData, session) {
   
   output$x_today <- renderPlot({
     if(input$"mjd_labels") {
-      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
     } else {
-      start.date <- mjd_to_date(mjd_today())
+      start.date <- mjd_to_date(forecast.mjd())
       d <- seq(start.date, start.date + 364, by = "days")
       plot(d, get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="", xaxt='n')
       axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
@@ -111,10 +119,10 @@ server <- function(input, output, clientData, session) {
   
   output$y_today <- renderPlot({
     if(input$"mjd_labels") {
-      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "y"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "y"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
     } else {
-      start.date <- mjd_to_date(mjd_today())
+      start.date <- mjd_to_date(forecast.mjd())
       d <- seq(start.date, start.date + 364, by = "days")
       plot(d, get_ssa_today()[, "y"], type="l", ylab="x pole", xlab="", xaxt='n')
       axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
@@ -124,10 +132,10 @@ server <- function(input, output, clientData, session) {
   
   output$lod_today <- renderPlot({
     if(input$"mjd_labels") {
-      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "LOD"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "LOD"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
     } else {
-      start.date <- mjd_to_date(mjd_today())
+      start.date <- mjd_to_date(forecast.mjd())
       d <- seq(start.date, start.date + 364, by = "days")
       plot(d, get_ssa_today()[, "LOD"], type="l", ylab="x pole", xlab="", xaxt='n')
       axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
@@ -137,10 +145,10 @@ server <- function(input, output, clientData, session) {
   
   output$dx_today <- renderPlot({
     if(input$"mjd_labels") {
-      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "dX"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "dX"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
     } else {
-      start.date <- mjd_to_date(mjd_today())
+      start.date <- mjd_to_date(forecast.mjd())
       d <- seq(start.date, start.date + 364, by = "days")
       plot(d, get_ssa_today()[, "dX"], type="l", ylab="x pole", xlab="", xaxt='n')
       axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
@@ -150,10 +158,10 @@ server <- function(input, output, clientData, session) {
   
   output$dy_today <- renderPlot({
     if(input$"mjd_labels") {
-      plot(mjd_today():(mjd_today()+364), get_ssa_today()[, "dY"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(mjd_today(), mjd_today() + 364, 10))
+      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "dY"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
+      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
     } else {
-      start.date <- mjd_to_date(mjd_today())
+      start.date <- mjd_to_date(forecast.mjd())
       d <- seq(start.date, start.date + 364, by = "days")
       plot(d, get_ssa_today()[, "dY"], type="l", ylab="x pole", xlab="", xaxt='n')
       axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
@@ -162,105 +170,104 @@ server <- function(input, output, clientData, session) {
   })
   
   output$x_dists_365_400 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_400_dists.csv", sep=""))
+    dists <- read.csv("today/x_365_400_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$x_dists_365_500 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_500_dists.csv", sep=""))
+    dists <- read.csv("today/x_365_500_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$x_dists_365_550 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_550_dists.csv", sep=""))
+    dists <- read.csv("today/x_365_550_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$x_dists_365_600 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_600_dists.csv", sep=""))
+    dists <- read.csv("today/x_365_600_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$x_dists_365_650 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/x_365_650_dists.csv", sep=""))
+    dists <- read.csv("today/x_365_650_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   output$y_dists_365_400 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_400_dists.csv", sep=""))
+    dists <- read.csv("today/y_365_400_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$y_dists_365_500 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_500_dists.csv", sep=""))
+    dists <- read.csv("today/y_365_500_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$y_dists_365_550 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_550_dists.csv", sep=""))
+    dists <- read.csv("today/y_365_550_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$y_dists_365_600 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_600_dists.csv", sep=""))
+    dists <- read.csv("today/y_365_600_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$y_dists_365_650 <- renderPlot({
-    print(mjd_today())
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/y_365_650_dists.csv", sep=""))
+    dists <- read.csv("today/y_365_650_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   output$lod_dists_365_2700 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2700_dists.csv", sep=""))
+    dists <- read.csv("today/LOD_365_2700_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$lod_dists_365_2750 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2750_dists.csv", sep=""))
+    dists <- read.csv("today/LOD_365_2750_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$lod_dists_365_2800 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2800_dists.csv", sep=""))
+    dists <- read.csv("today/LOD_365_2800_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$lod_dists_365_2850 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_2850_dists.csv", sep=""))
+    dists <- read.csv("today/LOD_365_2850_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$lod_dists_365_3000 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/LOD_365_3000_dists.csv", sep=""))
+    dists <- read.csv("today/LOD_365_3000_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   output$dx_dists_365_250 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_250_dists.csv", sep=""))
+    dists <- read.csv("today/dX_365_250_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$dx_dists_365_270 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_270_dists.csv", sep=""))
+    dists <- read.csv("today/dX_365_270_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$dx_dists_365_300 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_300_dists.csv", sep=""))
+    dists <- read.csv("today/dX_365_300_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$dx_dists_365_320 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dX_365_320_dists.csv", sep=""))
+    dists <- read.csv("today/dX_365_320_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
 
   output$dy_dists_365_250 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_250_dists.csv", sep=""))
+    dists <- read.csv("today/dY_365_250_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$dy_dists_365_270 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_270_dists.csv", sep=""))
+    dists <- read.csv("today/dY_365_270_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$dy_dists_365_300 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_300_dists.csv", sep=""))
+    dists <- read.csv("today/dY_365_300_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   output$dy_dists_365_320 <- renderPlot({
-    dists <- read.csv(paste("ssa/params/", mjd_today(), "/dY_365_320_dists.csv", sep=""))
+    dists <- read.csv("today/dY_365_320_dists.csv")
     plot(dists, type="l", ylab="MSE", xlab="Number of components")
   })
   
   get_params_today <- reactive({
-    params <- read.csv(paste("ssa/params/", mjd_today(), "/365params.csv", sep=""))
+    params <- read.csv("today/365params.csv", sep="")
     params
   })
   
@@ -442,6 +449,8 @@ ui = tagList(
              sidebarPanel(
                h4("MJD of today"),
                verbatimTextOutput("mjd"),
+               h4("Starting MJD of forecast"),
+               verbatimTextOutput("forecast.mjd"),
                checkboxInput("mjd_labels", "MJD labels", FALSE),
                tags$hr(),
                p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),

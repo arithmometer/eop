@@ -19,6 +19,7 @@ for(day in (last$x + 1):mjd) {
   get_file(am.filename, paste("http://www.gao.spb.ru/english/as/persac/eopcppp/", am.name, sep=""))
   get_file(e1.filename, paste("http://www.gao.spb.ru/english/as/persac/eopcppp/", e1.name, sep=""))
   
+  # it is supposed that at least one of two files is published every day
   if(file.info(am.filename)$size > 0 || file.info(e1.filename)$size > 0) {
     newlast <- day
   }
