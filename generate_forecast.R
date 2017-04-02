@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 library(methods)
+suppressMessages(library(plotly))
 suppressMessages(library(Rssa))
 
 mjd.given <- FALSE
@@ -77,12 +78,19 @@ find.Ln <- function(start.forecast, coord, start, end, L.list, pn, len, type, st
 }
 
 get.forecast <- function(start.forecast, len, L.list, lodL.list, dL.list, pn, lodn, dpn, years, dyears, steps, for.today) {
-  dir.create(paste("ssa/params/", start.forecast, "/", sep=""))
-  write.csv(L.list, paste("ssa/params/", start.forecast, "/x_L_list.csv", sep=""))
-  write.csv(L.list, paste("ssa/params/", start.forecast, "/y_L_list.csv", sep=""))
-  write.csv(lodL.list, paste("ssa/params/", start.forecast, "/LOD_L_list.csv", sep=""))
-  write.csv(dL.list, paste("ssa/params/", start.forecast, "/dX_L_list.csv", sep=""))
-  write.csv(dL.list, paste("ssa/params/", start.forecast, "/dY_L_list.csv", sep=""))
+  dir.create(paste("ssa/params/", start.forecast, "/", sep=""), showWarnings = FALSE)
+  write.csv(L.list, paste("ssa/params/", start.forecast, "/x_", len, "_L_list.csv", sep=""))
+  write.csv(L.list, paste("ssa/params/", start.forecast, "/y_", len, "_L_list.csv", sep=""))
+  write.csv(lodL.list, paste("ssa/params/", start.forecast, "/LOD_", len, "_L_list.csv", sep=""))
+  write.csv(dL.list, paste("ssa/params/", start.forecast, "/dX_", len, "_L_list.csv", sep=""))
+  write.csv(dL.list, paste("ssa/params/", start.forecast, "/dY_", len, "_L_list.csv", sep=""))
+  if(for.today) {
+    write.csv(L.list, paste("today/x_", len, "_L_list.csv", sep=""))
+    write.csv(L.list, paste("today/y_", len, "_L_list.csv", sep=""))
+    write.csv(lodL.list, paste("today/LOD_", len, "_L_list.csv", sep=""))
+    write.csv(dL.list, paste("today/dX_", len, "_L_list.csv", sep=""))
+    write.csv(dL.list, paste("today/dY_", len, "_L_list.csv", sep=""))
+  }
   
   # index corresponding to the beginning of forecast
   ind <- start.forecast - 37664
@@ -165,12 +173,12 @@ df.365 <- get.forecast(start.forecast, 365,
                        L.list=c(400, 500, 550, 600, 650),
                        lodL.list=c(2700, 2750, 2800, 2850, 3000),
                        dL.list=c(250, 270, 300, 320),
-                       pn=30, lodn=30, dpn=15, years=20, dyears=20, steps=5, for.today=TRUE)
+                       pn=30, lodn=30, dpn=5, years=20, dyears=20, steps=5, for.today=TRUE)
 df.90 <- get.forecast(start.forecast, 90,
                       L.list=c(300, 350, 400, 450, 500),
                       lodL.list=c(500, 550, 600, 650, 800),
                       dL.list=c(200, 250, 270, 300, 320),
-                      pn=30, lodn=30, dpn=15, years=20, dyears=20, steps=12, for.today=TRUE)
+                      pn=30, lodn=30, dpn=5, years=20, dyears=20, steps=12, for.today=TRUE)
 
 output.file.name.365 <- paste("ssa/", start.forecast, "_ssa_spbu_365.txt", sep = "")
 output.file.name.90 <- paste("ssa/", start.forecast, "_ssa_spbu_90.txt", sep = "")

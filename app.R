@@ -1,4 +1,5 @@
 library(shiny)
+library(plotly)
 library(shinythemes)
 
 server <- function(input, output, clientData, session) {
@@ -104,196 +105,185 @@ server <- function(input, output, clientData, session) {
     c04
   })
   
-  output$x_today <- renderPlot({
+  output$x_today <- renderPlotly({
     if(input$"mjd_labels") {
-      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
+      lab <- "MJD"
+      ticks <- forecast.mjd():(forecast.mjd()+364)
     } else {
+      lab <- "Date"
       start.date <- mjd_to_date(forecast.mjd())
-      d <- seq(start.date, start.date + 364, by = "days")
-      plot(d, get_ssa_today()[, "x"], type="l", ylab="x pole", xlab="", xaxt='n')
-      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
-                cex.axis=0.7, las=2)  
+      tm <- seq(0, 364, by = 1)
+      ticks <- start.date + tm
     }
+    
+    plot_ly(get_ssa_today(), y=~x, x=~ticks, type="scatter", mode="markers") %>% 
+      layout(xaxis=list(title=lab)) %>% 
+      layout(yaxis=list(title="x"))
   })
   
-  output$y_today <- renderPlot({
+  output$y_today <- renderPlotly({
     if(input$"mjd_labels") {
-      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "y"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
+      lab <- "MJD"
+      ticks <- forecast.mjd():(forecast.mjd()+364)
     } else {
+      lab <- "Date"
       start.date <- mjd_to_date(forecast.mjd())
-      d <- seq(start.date, start.date + 364, by = "days")
-      plot(d, get_ssa_today()[, "y"], type="l", ylab="x pole", xlab="", xaxt='n')
-      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
-                cex.axis=0.7, las=2)  
+      tm <- seq(0, 364, by = 1)
+      ticks <- start.date + tm
     }
+    
+    plot_ly(get_ssa_today(), y=~y, x=~ticks, type="scatter", mode="markers") %>% 
+      layout(xaxis=list(title=lab)) %>% 
+      layout(yaxis=list(title="y"))
   })
   
-  output$lod_today <- renderPlot({
+  output$LOD_today <- renderPlotly({
     if(input$"mjd_labels") {
-      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "LOD"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
+      lab <- "MJD"
+      ticks <- forecast.mjd():(forecast.mjd()+364)
     } else {
+      lab <- "Date"
       start.date <- mjd_to_date(forecast.mjd())
-      d <- seq(start.date, start.date + 364, by = "days")
-      plot(d, get_ssa_today()[, "LOD"], type="l", ylab="x pole", xlab="", xaxt='n')
-      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
-                cex.axis=0.7, las=2)  
+      tm <- seq(0, 364, by = 1)
+      ticks <- start.date + tm
     }
+    
+    plot_ly(get_ssa_today(), y=~LOD, x=~ticks, type="scatter", mode="markers") %>% 
+      layout(xaxis=list(title=lab)) %>% 
+      layout(yaxis=list(title="LOD"))
   })
   
-  output$dx_today <- renderPlot({
+  output$dX_today <- renderPlotly({
     if(input$"mjd_labels") {
-      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "dX"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
+      lab <- "MJD"
+      ticks <- forecast.mjd():(forecast.mjd()+364)
     } else {
+      lab <- "Date"
       start.date <- mjd_to_date(forecast.mjd())
-      d <- seq(start.date, start.date + 364, by = "days")
-      plot(d, get_ssa_today()[, "dX"], type="l", ylab="x pole", xlab="", xaxt='n')
-      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
-                cex.axis=0.7, las=2)  
+      tm <- seq(0, 364, by = 1)
+      ticks <- start.date + tm
     }
+    
+    plot_ly(get_ssa_today(), y=~dX, x=~ticks, type="scatter", mode="markers") %>% 
+      layout(xaxis=list(title=lab)) %>% 
+      layout(yaxis=list(title="dX"))
   })
   
-  output$dy_today <- renderPlot({
+  output$dY_today <- renderPlotly({
     if(input$"mjd_labels") {
-      plot(forecast.mjd():(forecast.mjd()+364), get_ssa_today()[, "dY"], type="l", ylab="x pole", xlab="MJD", xaxt='n')
-      axis(side=1, at=seq(forecast.mjd(), forecast.mjd() + 364, 10))
+      lab <- "MJD"
+      ticks <- forecast.mjd():(forecast.mjd()+364)
     } else {
+      lab <- "Date"
       start.date <- mjd_to_date(forecast.mjd())
-      d <- seq(start.date, start.date + 364, by = "days")
-      plot(d, get_ssa_today()[, "dY"], type="l", ylab="x pole", xlab="", xaxt='n')
-      axis.Date(side=1, at=seq(as.Date(start.date), as.Date(start.date) + 364, by = "weeks"), format="%d-%m-%Y", 
-                cex.axis=0.7, las=2)  
+      tm <- seq(0, 364, by = 1)
+      ticks <- start.date + tm
     }
-  })
-  
-  output$x_dists_365_400 <- renderPlot({
-    dists <- read.csv("today/x_365_400_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$x_dists_365_500 <- renderPlot({
-    dists <- read.csv("today/x_365_500_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$x_dists_365_550 <- renderPlot({
-    dists <- read.csv("today/x_365_550_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$x_dists_365_600 <- renderPlot({
-    dists <- read.csv("today/x_365_600_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$x_dists_365_650 <- renderPlot({
-    dists <- read.csv("today/x_365_650_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  
-  output$y_dists_365_400 <- renderPlot({
-    dists <- read.csv("today/y_365_400_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$y_dists_365_500 <- renderPlot({
-    dists <- read.csv("today/y_365_500_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$y_dists_365_550 <- renderPlot({
-    dists <- read.csv("today/y_365_550_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$y_dists_365_600 <- renderPlot({
-    dists <- read.csv("today/y_365_600_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$y_dists_365_650 <- renderPlot({
-    dists <- read.csv("today/y_365_650_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  
-  output$lod_dists_365_2700 <- renderPlot({
-    dists <- read.csv("today/LOD_365_2700_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$lod_dists_365_2750 <- renderPlot({
-    dists <- read.csv("today/LOD_365_2750_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$lod_dists_365_2800 <- renderPlot({
-    dists <- read.csv("today/LOD_365_2800_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$lod_dists_365_2850 <- renderPlot({
-    dists <- read.csv("today/LOD_365_2850_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$lod_dists_365_3000 <- renderPlot({
-    dists <- read.csv("today/LOD_365_3000_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  
-  output$dx_dists_365_250 <- renderPlot({
-    dists <- read.csv("today/dX_365_250_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$dx_dists_365_270 <- renderPlot({
-    dists <- read.csv("today/dX_365_270_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$dx_dists_365_300 <- renderPlot({
-    dists <- read.csv("today/dX_365_300_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
-  })
-  output$dx_dists_365_320 <- renderPlot({
-    dists <- read.csv("today/dX_365_320_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+    
+    plot_ly(get_ssa_today(), y=~dY, x=~ticks, type="scatter", mode="markers") %>% 
+      layout(xaxis=list(title=lab)) %>% 
+      layout(yaxis=list(title="dY"))
   })
 
-  output$dy_dists_365_250 <- renderPlot({
-    dists <- read.csv("today/dY_365_250_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  output$x_dists <- renderUI({
+    L_list <- read.csv("today/x_365_L_list.csv")
+    do.call(tabsetPanel, lapply(L_list$x, function(L) {
+      dists <- read.csv(paste("today/x_365_", L, "_dists.csv", sep=""))
+      output[[paste("x_dists_365_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
+                                                                   layout(xaxis=list(title="Number of components")) %>% 
+                                                                   layout(yaxis=list(title="MSE")))
+      tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste("x_dists_365_", L, sep="")))
+    }))
   })
-  output$dy_dists_365_270 <- renderPlot({
-    dists <- read.csv("today/dY_365_270_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  
+  output$y_dists <- renderUI({
+    L_list <- read.csv("today/y_365_L_list.csv")
+    do.call(tabsetPanel, lapply(L_list$x, function(L) {
+      dists <- read.csv(paste("today/y_365_", L, "_dists.csv", sep=""))
+      output[[paste("y_dists_365_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
+                                                                   layout(xaxis=list(title="Number of components")) %>% 
+                                                                   layout(yaxis=list(title="MSE")))
+      tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste("y_dists_365_", L, sep="")))
+    }))
   })
-  output$dy_dists_365_300 <- renderPlot({
-    dists <- read.csv("today/dY_365_300_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  
+  output$LOD_dists <- renderUI({
+    L_list <- read.csv("today/LOD_365_L_list.csv")
+    do.call(tabsetPanel, lapply(L_list$x, function(L) {
+      dists <- read.csv(paste("today/LOD_365_", L, "_dists.csv", sep=""))
+      output[[paste("LOD_dists_365_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
+                                                                   layout(xaxis=list(title="Number of components")) %>% 
+                                                                   layout(yaxis=list(title="MSE")))
+      tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste("LOD_dists_365_", L, sep="")))
+    }))
   })
-  output$dy_dists_365_320 <- renderPlot({
-    dists <- read.csv("today/dY_365_320_dists.csv")
-    plot(dists, type="l", ylab="MSE", xlab="Number of components")
+  
+  output$dX_dists <- renderUI({
+    L_list <- read.csv("today/dX_365_L_list.csv")
+    do.call(tabsetPanel, lapply(L_list$x, function(L) {
+      dists <- read.csv(paste("today/dX_365_", L, "_dists.csv", sep=""))
+      output[[paste("dX_dists_365_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
+                                                                     layout(xaxis=list(title="Number of components")) %>% 
+                                                                     layout(yaxis=list(title="MSE")))
+      tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste("dX_dists_365_", L, sep="")))
+    }))
+  })
+  
+  output$dY_dists <- renderUI({
+    L_list <- read.csv("today/dY_365_L_list.csv")
+    do.call(tabsetPanel, lapply(L_list$x, function(L) {
+      dists <- read.csv(paste("today/dY_365_", L, "_dists.csv", sep=""))
+      output[[paste("dY_dists_365_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
+                                                                    layout(xaxis=list(title="Number of components")) %>% 
+                                                                    layout(yaxis=list(title="MSE")))
+      tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste("dY_dists_365_", L, sep="")))
+    }))
+  })
+  
+  eop.list <- list("x", "y", "LOD", "dX", "dY")
+  
+  output$tabset_eop <- renderUI({
+    do.call(tabsetPanel, lapply(eop.list, function(eop) {
+      tabPanel(eop,
+        h4("Choice of parameters for this forecast:"),
+        verbatimTextOutput(paste(eop, "_params_365", sep="")),
+        h4(eop),
+        plotlyOutput(paste(eop, "_today", sep="")),
+        tags$br(),
+        h4("MSE"),
+        uiOutput(paste(eop, "_dists", sep=""))
+      )
+    }))
   })
   
   get_params_today <- reactive({
-    params <- read.csv("today/365params.csv", sep="")
+    params <- read.csv("today/365params.csv")
     params
   })
   
   output$x_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$x[1], params$x[2])
+    sprintf("L: %d\np: %d", params$x[1], params$x[2])
   })
   
   output$y_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$y[1], params$y[2])
+    sprintf("L: %d\np: %d", params$y[1], params$y[2])
   })
   
   output$lod_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$LOD[1], params$LOD[2])
+    sprintf("L: %d\np: %d", params$LOD[1], params$LOD[2])
   })
   
   output$dx_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$dX[1], params$dX[2])
+    sprintf("L: %d\np: %d", params$dX[1], params$dX[2])
   })
   
   output$dy_params_365 <- reactive({
     params <- get_params_today()
-    sprintf("L: %d\nneig: %d", params$dY[1], params$dY[2])
+    sprintf("L: %d\np: %d", params$dY[1], params$dY[2])
   })
   
   legend.names <- c("C04", "SSA", "Pul AM", "Pul E1")
@@ -462,81 +452,7 @@ ui = tagList(
                tags$br()
              ),
              mainPanel(
-               tabsetPanel(type = "tabs", 
-                           tabPanel("Pole x",
-                             h4("Choice of parameters for this forecast:"),
-                             verbatimTextOutput("x_params_365"),
-                             h4("Pole x"),
-                             plotOutput("x_today"),
-                             tags$br(),
-                             h4("MSE"),
-                             tabsetPanel(type="tabs",
-                                         tabPanel("L = 400", plotOutput("x_dists_365_400")),
-                                         tabPanel("L = 500", plotOutput("x_dists_365_500")),
-                                         tabPanel("L = 550", plotOutput("x_dists_365_550")),
-                                         tabPanel("L = 600", plotOutput("x_dists_365_600")),
-                                         tabPanel("L = 650", plotOutput("x_dists_365_650"))
-                                         )
-                           ), 
-                           tabPanel("Pole y",
-                             h4("Choice of parameters for this forecast:"),
-                             verbatimTextOutput("y_params_365"),
-                             h4("Pole y"),
-                             plotOutput("y_today"),
-                             tags$br(),
-                             h4("MSE"),
-                             tabsetPanel(type="tabs",
-                                         tabPanel("L = 400", plotOutput("y_dists_365_400")),
-                                         tabPanel("L = 500", plotOutput("y_dists_365_500")),
-                                         tabPanel("L = 550", plotOutput("y_dists_365_550")),
-                                         tabPanel("L = 600", plotOutput("y_dists_365_600")),
-                                         tabPanel("L = 650", plotOutput("y_dists_365_650"))
-                             )
-                           ),
-                           tabPanel("LOD",
-                             h4("Choice of parameters for this forecast:"),
-                             verbatimTextOutput("lod_params_365"),
-                             h4("LOD"),
-                             plotOutput("lod_today"),
-                             tags$br(),
-                             h4("MSE"),
-                             tabsetPanel(type="tabs",
-                                         tabPanel("L = 2700", plotOutput("lod_dists_365_2700")),
-                                         tabPanel("L = 2750", plotOutput("lod_dists_365_2750")),
-                                         tabPanel("L = 2800", plotOutput("lod_dists_365_2800")),
-                                         tabPanel("L = 2850", plotOutput("lod_dists_365_2850")),
-                                         tabPanel("L = 3000", plotOutput("lod_dists_365_3000"))
-                             )
-                           ),
-                           tabPanel("dX",
-                             h4("Choice of parameters for this forecast:"),
-                             verbatimTextOutput("dx_params_365"),
-                             h4("dX"),
-                             plotOutput("dx_today"),
-                             tags$br(),
-                             h4("MSE"),
-                             tabsetPanel(type="tabs",
-                                         tabPanel("L = 250", plotOutput("dx_dists_365_250")),
-                                         tabPanel("L = 270", plotOutput("dx_dists_365_270")),
-                                         tabPanel("L = 300", plotOutput("dx_dists_365_300")),
-                                         tabPanel("L = 320", plotOutput("dx_dists_365_320"))
-                             )
-                           ),
-                           tabPanel("dY",
-                             h4("Choice of parameters for this forecast:"),
-                             verbatimTextOutput("dy_params_365"),
-                             h4("dY"),
-                             plotOutput("dy_today"),
-                             tags$br(),
-                             h4("MSE"),
-                             tabsetPanel(type="tabs",
-                                         tabPanel("L = 250", plotOutput("dy_dists_365_250")),
-                                         tabPanel("L = 270", plotOutput("dy_dists_365_270")),
-                                         tabPanel("L = 300", plotOutput("dy_dists_365_300")),
-                                         tabPanel("L = 320", plotOutput("dy_dists_365_320"))
-                             )
-                           )
-               )
+               uiOutput("tabset_eop")
              )
     ),
     tabPanel("Compare Forecasts",
