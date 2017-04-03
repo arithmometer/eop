@@ -176,7 +176,9 @@ server <- function(input, output, clientData, session) {
         ticks <- start.date + tm
       }
 
-      p <- plot_ly(x = ~ticks, y = get_final()[(ind):(ind + 364), eop], type = 'scatter', mode = 'lines', name = 'C04')
+      p <- plot_ly(x = ~ticks, y = get_final()[(ind):(ind + 364), eop], type = 'scatter', mode = 'lines', name = 'C04') %>%
+        layout(xaxis=list(title=lab)) %>% 
+        layout(yaxis=list(title=eop))
       n <- length(series.list)
       for(i in 1:n) {
         if(series.list[i] %in% input$displaySeries) {
