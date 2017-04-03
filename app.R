@@ -95,6 +95,7 @@ server <- function(input, output, clientData, session) {
   })
   
   eop.list <- list("x", "y", "LOD", "dX", "dY")
+  
   lapply(eop.list, function(eop) {
     output[[paste(eop, "_today", sep="")]] <- renderPlotly({
       if(input$"mjd_labels") {
@@ -160,24 +161,29 @@ server <- function(input, output, clientData, session) {
   series.getters <- list(get_ssa, get_pul_am, get_pul_e1)
   
   lapply(eop.list, function(eop) {
-    output[[paste(eop, "_comparison", sep="")]] <- renderPlot({
+    output[[paste(eop, "_comparison", sep="")]] <- renderPlotly({
       chosen <- c(TRUE, FALSE, FALSE, FALSE)
       mjd <- get_compare_mjd()
       ind <- mjd - 37664
-      plot(mjd:(mjd+364), get_final()[(ind):(ind + 364), eop], type="l", xlab="MJD", ylab=eop)
-      if("ssa" %in% input$displaySeries) {
-        chosen[2] <- TRUE
-        lines(mjd:(mjd+364), get_ssa()[1:365, "x"], col="blue", lwd=2)
+      
+      if(input$"mjd_compare_labels") {
+        lab <- "MJD"
+        ticks <- mjd:(mjd+364)
+      } else {
+        lab <- "Date"
+        start.date <- mjd_to_date(mjd)
+        tm <- seq(0, 364, by = 1)
+        ticks <- start.date + tm
       }
-      if("pul_am" %in% input$displaySeries) {
-        chosen[3] <- TRUE
-        lines(mjd:(mjd+364), get_pul_am()[1:365, "x"], col="orange")
+
+      p <- plot_ly(x = ~ticks, y = get_final()[(ind):(ind + 364), eop], type = 'scatter', mode = 'lines', name = 'C04')
+      n <- length(series.list)
+      for(i in 1:n) {
+        if(series.list[i] %in% input$displaySeries) {
+          p <- p %>% add_trace(y = series.getters[[i]]()[1:365, eop], name = series.names[i])
+        }
       }
-      if("pul_e1" %in% input$displaySeries) {
-        chosen[4] <- TRUE
-        lines(mjd:(mjd+364), get_pul_e1()[1:365, "x"], col="green")
-      }
-      legend("topright", legend.names[chosen], col=legend.colors[chosen], lty=1, bty='n', cex=1.25, xpd=TRUE)
+      p
     })
   })
   
@@ -238,6 +244,8 @@ ui = tagList(
                          min="2010-08-26", max="2017-02-04",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
+               checkboxInput("mjd_compare_labels", "MJD labels", FALSE),
+               tags$hr(),
                selectizeInput(
                  'displaySeries', 'Series to display', choices=
                    list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1"), multiple=TRUE
@@ -248,15 +256,15 @@ ui = tagList(
                tableOutput("comparison_table"),
                tags$hr(),
                h4("Pole x"),
-               plotOutput("x_comparison"),
+               plotlyOutput("x_comparison"),
                h4("Pole y"),
-               plotOutput("y_comparison"),
+               plotlyOutput("y_comparison"),
                h4("LOD"),
-               plotOutput("LOD_comparison"),
+               plotlyOutput("LOD_comparison"),
                h4("dX"),
-               plotOutput("dX_comparison"),
+               plotlyOutput("dX_comparison"),
                h4("dY"),
-               plotOutput("dY_comparison")
+               plotlyOutput("dY_comparison")
              )
     ),
     tabPanel("About",
