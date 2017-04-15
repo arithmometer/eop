@@ -63,10 +63,12 @@ server <- function(input, output, clientData, session) {
     mjd <- get_compare_mjd()
     am_pul <- tryCatch({read.table(paste("pul/", mjd - 1, "_am_pul.txt", sep = ""), skip=1)},
              silent = TRUE, condition = function(err) { NA } )
-    colnames(am_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
-    am_pul$dX <- am_pul$dX * 10**(-3)
-    am_pul$dY <- am_pul$dY * 10**(-3)
-    am_pul$LOD <- am_pul$LOD * 10**(-3)
+    if(!is.na(am_pul)) {
+      colnames(am_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
+      am_pul$dX <- am_pul$dX * 10**(-3)
+      am_pul$dY <- am_pul$dY * 10**(-3)
+      am_pul$LOD <- am_pul$LOD * 10**(-3) 
+    }
     am_pul
   })
 
@@ -74,10 +76,12 @@ server <- function(input, output, clientData, session) {
     mjd <- get_compare_mjd()
     e1_pul <- tryCatch({read.table(paste("pul/", mjd - 1, "_e1_pul.txt", sep = ""), skip=1)},
              silent = TRUE, condition = function(err) { NA } )
-    colnames(e1_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
-    e1_pul$dX <- e1_pul$dX * 10**(-3)
-    e1_pul$dY <- e1_pul$dY * 10**(-3)
-    e1_pul$LOD <- e1_pul$LOD * 10**(-3)
+    if(!is.na(e1_pul)) {
+      colnames(e1_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
+      e1_pul$dX <- e1_pul$dX * 10**(-3)
+      e1_pul$dY <- e1_pul$dY * 10**(-3)
+      e1_pul$LOD <- e1_pul$LOD * 10**(-3)  
+    }
     e1_pul
   })
 
@@ -180,7 +184,9 @@ server <- function(input, output, clientData, session) {
         if(series.list[i] %in% input$displaySeries) {
           series <- series.getters[[i]]()
           if(is.na(series)) {
-            showNotification(paste(series.names[i], "is not available.", sep=" "))
+            if(eop == "x") {
+              showNotification(paste(series.names[i], "is not available.", sep=" "), type="error")
+            }
           } else {
             p <- p %>% add_trace(y = series[1:365, eop], name = series.names[i])
           }
@@ -201,14 +207,17 @@ server <- function(input, output, clientData, session) {
     n <- length(series.list)
     for(i in 1:n) {
       if(series.list[i] %in% input$displaySeries) {
-        rn <- rownames(df)
-        df <- rbind(df, data.frame(
-          x=  MSE(get_final()[(ind):(ind + 364), "x"],   series.getters[[i]]()[1:365, "x"], 365),
-          y=  MSE(get_final()[(ind):(ind + 364), "y"],   series.getters[[i]]()[1:365, "y"], 365),
-          LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series.getters[[i]]()[1:365, "LOD"], 365),
-          dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series.getters[[i]]()[1:365, "dX"], 365),
-          dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series.getters[[i]]()[1:365, "dY"], 365)))
-        rownames(df) <- c(rn, series.names[i])
+        series <- series.getters[[i]]()
+        if(!is.na(series)) {
+          rn <- rownames(df)
+          df <- rbind(df, data.frame(
+            x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
+            y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
+            LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
+            dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
+            dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+          rownames(df) <- c(rn, series.names[i])
+        }
       }
     }
     df
@@ -223,7 +232,6 @@ ui = tagList(
              sidebarPanel(
                h4("MJD of today"),
                verbatimTextOutput("mjd"),
-               # verbatimTextOutput("mjd"),
                h4("Starting MJD of forecast"),
                verbatimTextOutput("forecast.mjd"),
                checkboxInput("mjd_labels_365", "MJD labels", FALSE),
@@ -260,7 +268,7 @@ ui = tagList(
              sidebarPanel(
                p("Date input is limited between 27.08.2010 and 1.03.2016"),
                tags$hr(),
-               dateInput("date_compare", label="Choose starting date", value="2010-08-27",
+               dateInput("date_compare", label="Choose starting date", value="2015-12-11",
                          min="2010-08-26", max="2016-03-01",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
