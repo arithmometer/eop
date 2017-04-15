@@ -4,8 +4,7 @@ library(shinythemes)
 library(Rssa)
 
 server <- function(input, output, clientData, session) {
-  # prefix <- "/srv/shiny-server/eop/"
-  prefix <- "/home/grigory/data/R/eop/"
+  prefix <- "/srv/shiny-server/eop/"
   
   mjd.today <- reactive({
     date.string <- format(Sys.time(), "%Y-%m-%d")
