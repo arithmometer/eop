@@ -1,8 +1,12 @@
 library(shiny)
 library(plotly)
 library(shinythemes)
+library(Rssa)
 
 server <- function(input, output, clientData, session) {
+  # prefix <- "/srv/shiny-server/eop/"
+  prefix <- "/home/grigory/data/R/eop/"
+  
   mjd.today <- reactive({
     date.string <- format(Sys.time(), "%Y-%m-%d")
     as.integer(as.Date(date.string) - as.Date("1858-11-17") - 1)
@@ -222,6 +226,77 @@ server <- function(input, output, clientData, session) {
     }
     df
   }, include.rownames=TRUE, digits=10)
+  
+  values <- reactiveValues()
+  values$showDownloadButton <- FALSE
+
+  observe({
+    values$showDownloadButton
+    values$generatedForecast
+  })
+
+  output$showDownloadButton <- reactive({
+    return(values$showDownloadButton)
+  })
+  
+  observeEvent(input$generateForecast, {
+    values$showDownloadButton <- TRUE
+    
+    date.string <- format(Sys.time(), "%Y-%m-%d")
+    start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
+
+    c04 <- read.table(paste(prefix, "eopc04_IAU2000.62-now.txt", sep=""), comment.char = "#", skip = 14)
+    colnames(c04) <- c("Year", "Month", "Day", "MJD", "x", "y", "UT1-UTC", "LOD",
+                       "dX", "dY", "x Err", "y Err", "UT1-UTC err", "LOD err", "dX err", "dY err")
+    finals2000 <- read.csv(paste(prefix, "csv/", start.forecast - 1, "/finals2000A.daily.csv", sep=""), sep=";")
+
+    last.mjd.c04 <- c04[nrow(c04), "MJD"]
+    mjd.from <- last.mjd.c04 + 1
+    mjd.to <- start.forecast - 1
+    ind.from <- which(finals2000["MJD"] == mjd.from)
+    ind.to <- which(finals2000["MJD"] == mjd.to)
+
+    gap.df <- data.frame("MJD"=mjd.from:mjd.to,
+                         "x"=finals2000[ind.from:ind.to, "x_pole"],
+                         "y"=finals2000[ind.from:ind.to, "y_pole"],
+                         "LOD"=finals2000[ind.from:ind.to, "LOD"] / 1000,
+                         "dX"=finals2000[ind.from:ind.to, "dX"] / 1000,
+                         "dY"=finals2000[ind.from:ind.to, "dY"] / 1000)
+
+    c04 <- rbind(c04[, c("MJD", "x", "y", "LOD", "dX", "dY")], gap.df)
+
+    ind <- start.forecast - 37664
+    fin <- ind - 1
+    years <- 20
+    period <- years * 365
+    if(input$generateEOP == "LOD") {
+      x <- c04[(fin - period):(fin - 1), input$generateEOP]
+      forecast.len <- input$genDays + 1
+    } else {
+      x <- c04[(fin - period + 1):fin, input$generateEOP]
+      forecast.len <- input$genDays
+    }
+
+    rf.x <- rforecast(ssa(x, L = input$L, neig = input$p), groups = list(1:input$p), len = forecast.len, only.new = TRUE)
+    if(input$generateEOP == "LOD") {
+      rf.x <- rf.x[-1]
+    }
+
+    df <- data.frame(start.forecast:(start.forecast + input$genDays - 1), rf.x)
+    colnames(df) <- c("MJD", input$generateEOP)
+    values$generatedForecast <- df
+  })
+  
+  output$downloadGeneratedForecast <- downloadHandler(
+    filename <- function() {
+      paste(forecast.mjd(), "_ssa_spbu_", input$genDays, ".csv", sep="")
+    },
+    
+    content <- function(file) {
+      write.csv(values$generatedForecast, file)
+    },
+    contentType = "text/csv"
+  )
 }
 
 ui = tagList(
@@ -262,6 +337,27 @@ ui = tagList(
              ),
              mainPanel(
                uiOutput("tabset_eop_90")
+             )
+    ),
+    tabPanel("Generate Forecast",
+             sidebarPanel(
+               h4("SSA Forecast Parameters"),
+               selectInput("generateEOP", "Choose EOP:",
+                           c("Pole x" = "x",
+                             "Pole y" = "y",
+                             "LOD" = "LOD",
+                             "dX" = "dX",
+                             "dY" = "dY")),
+               numericInput("L", "L: (between 100 and 10000)", min = 100, max = 10000, value = 500),
+               numericInput("p", "p: (between 0 and 100)", min = 0, max = 100, value = 30),
+               numericInput("genDays", "Days: (between 10 and 3650)", min = 10, max = 3650, value = 365),
+               br(),
+               actionButton("generateForecast", "Generate"),
+               br(),
+               conditionalPanel(condition = "output.showDownloadButton == TRUE", downloadButton("downloadGeneratedForecast", label = "Download forecast"))
+             ),
+             mainPanel(
+               h4("Generated Forecast")
              )
     ),
     tabPanel("Compare Forecasts",
@@ -305,7 +401,8 @@ ui = tagList(
                            "Earth Orientation Parameters C04 Guide"))
                ),
                tags$hr(),
-               p("By arithmometer")
+               p("By arithmometer"),
+               a("GitHub", href="http://www.github.com/arithmometer/eop")
              )
     )
   )
