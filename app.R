@@ -133,7 +133,7 @@ server <- function(input, output, clientData, session) {
           dists <- read.csv(paste("today/", eop, "_", days, "_", L, "_dists.csv", sep=""))
           output[[paste(eop, "_dists_", days, "_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
                                                                            layout(xaxis=list(title="Number of components")) %>% 
-                                                                           layout(yaxis=list(title="MSE")))
+                                                                           layout(yaxis=list(title="MSE", type="log")))
           tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste(eop, "_dists_", days, "_", L, sep="")))
         }))
       })
