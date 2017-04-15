@@ -14,8 +14,7 @@ date.string <- format(Sys.time(), "%Y-%m-%d")
 start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
 }
 
-# prefix <- "/srv/shiny-server/eop/"
-prefix <- "/home/grigory/data/R/eop/"
+prefix <- "/srv/shiny-server/eop/"
 
 url <- "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04_IAU2000.62-now"
 destfile <- paste(prefix, "eopc04_IAU2000.62-now.txt", sep="")
@@ -102,7 +101,7 @@ get.forecast <- function(start.forecast, len, L.list, lodL.list, dL.list, pn, lo
   period <- years * 365
   x <- c04[(fin - period + 1):fin, "x"]
   y <- c04[(fin - period + 1):fin, "y"]
-  lod <- c04[(fin - period + 1):fin, "LOD"]
+  lod <- c04[(fin - period):(fin - 1), "LOD"]
   # for dX, dY corrections use last "dyears" years
   dperiod <- dyears * 365
   dX <- c04[(fin - dperiod + 1):fin, "dX"]
@@ -113,13 +112,13 @@ get.forecast <- function(start.forecast, len, L.list, lodL.list, dL.list, pn, lo
   dstart <- end - dperiod + 1
   xp <- find.Ln(start.forecast, "x", start, end, L.list, pn, len, "mean", steps, for.today)
   yp <- find.Ln(start.forecast, "y", start, end, L.list, pn, len, "mean", steps, for.today)
-  lodp <- find.Ln(start.forecast, "LOD", start, end, lodL.list, lodn, len, "mean", steps, for.today)
+  lodp <- find.Ln(start.forecast, "LOD", start - 1, end - 1, lodL.list, lodn, len, "mean", steps, for.today)
   dxp <- find.Ln(start.forecast, "dX", dstart, end, dL.list, dpn, len, "mean", steps, for.today)
   dyp <- find.Ln(start.forecast, "dY", dstart, end, dL.list, dpn, len, "mean", steps, for.today)
   
   rf.x <- rforecast(ssa(x, L = xp[[1]], neig = xp[[2]]), groups = list(1:xp[[2]]), len = len, only.new = TRUE)
   rf.y <- rforecast(ssa(y, L = yp[[1]], neig = yp[[2]]), groups = list(1:yp[[2]]), len = len, only.new = TRUE)
-  rf.lod <- rforecast(ssa(lod, L = lodp[[1]], neig = lodp[[2]]), groups = list(c(1:lodp[[2]])), len = len, only.new = TRUE)
+  rf.lod <- rforecast(ssa(lod, L = lodp[[1]], neig = lodp[[2]]), groups = list(c(1:lodp[[2]])), len = len + 1, only.new = TRUE)
   rf.dx <- rforecast(ssa(dX, L = dxp[[1]], neig = dxp[[2]]), groups = list(c(1:dxp[[2]])), len = len, only.new = TRUE)
   rf.dy <- rforecast(ssa(dY, L = dyp[[1]], neig = dyp[[2]]), groups = list(c(1:dyp[[2]])), len = len, only.new = TRUE)
   
@@ -134,7 +133,7 @@ get.forecast <- function(start.forecast, len, L.list, lodL.list, dL.list, pn, lo
     write.csv(params, paste(prefix, "today/", len, "params.csv", sep=""))
   }
   
-  df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = rf.x, y = rf.y, LOD = rf.lod, dX = rf.dx, dY = rf.dy)
+  df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = rf.x, y = rf.y, LOD = rf.lod[-1], dX = rf.dx, dY = rf.dy)
 }
 
 my.write <- function(x, file, header, f = write.table, ...) {
@@ -166,7 +165,6 @@ if(!mjd.given) {
                        "LOD"=finals2000[ind.from:ind.to, "LOD"] / 1000,
                        "dX"=finals2000[ind.from:ind.to, "dX"] / 1000,
                        "dY"=finals2000[ind.from:ind.to, "dY"] / 1000)
-  gap.df[nrow(gap.df), "LOD"] <- gap.df[nrow(gap.df) - 1, "LOD"]
   
   c04 <- rbind(c04[, c("MJD", "x", "y", "LOD", "dX", "dY")], gap.df)
 }
