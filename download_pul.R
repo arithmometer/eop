@@ -2,7 +2,9 @@ get_file <- function(filename, url) {
   tryCatch({download.file(url, destfile=filename)}, silent = TRUE, condition = function(err) { } )
 }
 
-last.filename <- "pul/last.csv"
+prefix <- "/srv/shiny-server/eop/"
+
+last.filename <- paste(prefix, "pul/last.csv", sep="")
 last <- read.csv(last.filename)
 newlast <- last
 
@@ -13,8 +15,8 @@ for(day in (last$x + 1):mjd) {
   am.name <- paste(day, "_am_pul.txt", sep="")
   e1.name <- paste(day, "_e1_pul.txt", sep="")
   
-  am.filename <- paste("pul/", am.name, sep="")
-  e1.filename <- paste("pul/", e1.name, sep="")
+  am.filename <- paste(prefix, "pul/", am.name, sep="")
+  e1.filename <- paste(prefix, "pul/", e1.name, sep="")
   
   get_file(am.filename, paste("http://www.gao.spb.ru/english/as/persac/eopcppp/", am.name, sep=""))
   get_file(e1.filename, paste("http://www.gao.spb.ru/english/as/persac/eopcppp/", e1.name, sep=""))

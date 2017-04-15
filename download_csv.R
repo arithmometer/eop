@@ -1,4 +1,4 @@
-prefix <- ""
+prefix <- "/srv/shiny-server/eop/"
 
 # urls
 url_finals2000a <- "https://datacenter.iers.org/eop/-/somos/5Rgv/latestXL/13/finals2000A.daily/csv"

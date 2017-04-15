@@ -8,21 +8,22 @@ args = commandArgs(trailingOnly=TRUE)
 if(length(args) > 0) {
   mjd.given <- TRUE
   start.forecast <- as.integer(args[1])
-}
-
+} else {
 date.string <- format(Sys.time(), "%Y-%m-%d")
-
 # put to start.forecast MJD of today
 start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
+}
+
+prefix <- "/srv/shiny-server/eop/"
 
 url <- "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04_IAU2000.62-now"
-destfile <- "eopc04_IAU2000.62-now.txt"
+destfile <- paste(prefix, "eopc04_IAU2000.62-now.txt", sep="")
 download.file(url, destfile, method = "auto", quiet=TRUE)
-if(!file.exists("eopc04_IAU2000.62-now.txt")) {
+if(!file.exists(destfile)) {
   stop("c04 file does not exist", call.=FALSE)
 }
 
-c04 <- read.table("eopc04_IAU2000.62-now.txt", comment.char = "#", skip = 14)
+c04 <- read.table(destfile, comment.char = "#", skip = 14)
 colnames(c04) <- c("Year", "Month", "Day", "MJD", "x", "y", "UT1-UTC", "LOD",
                    "dX", "dY", "x Err", "y Err", "UT1-UTC err", "LOD err", "dX err", "dY err")
 
@@ -54,9 +55,9 @@ find.n <- function(start.forecast, coord, start, end, L, n, len, type, steps, fo
   rm(x, s)
   gc()
   
-  write.csv(dists, paste(paste("ssa/params/", start.forecast, "/", coord, sep=""), len, L, "dists.csv", sep="_"))
+  write.csv(dists, paste(paste(prefix, "ssa/params/", start.forecast, "/", coord, sep=""), len, L, "dists.csv", sep="_"))
   if(for.today) {
-    write.csv(dists, paste(paste("today/", coord, sep=""), len, L, "dists.csv", sep="_"))
+    write.csv(dists, paste(paste(prefix, "today/", coord, sep=""), len, L, "dists.csv", sep="_"))
   }
   
   return(list(which.min(dists), min(dists)))
@@ -78,18 +79,18 @@ find.Ln <- function(start.forecast, coord, start, end, L.list, pn, len, type, st
 }
 
 get.forecast <- function(start.forecast, len, L.list, lodL.list, dL.list, pn, lodn, dpn, years, dyears, steps, for.today) {
-  dir.create(paste("ssa/params/", start.forecast, "/", sep=""), showWarnings = FALSE)
-  write.csv(L.list, paste("ssa/params/", start.forecast, "/x_", len, "_L_list.csv", sep=""))
-  write.csv(L.list, paste("ssa/params/", start.forecast, "/y_", len, "_L_list.csv", sep=""))
-  write.csv(lodL.list, paste("ssa/params/", start.forecast, "/LOD_", len, "_L_list.csv", sep=""))
-  write.csv(dL.list, paste("ssa/params/", start.forecast, "/dX_", len, "_L_list.csv", sep=""))
-  write.csv(dL.list, paste("ssa/params/", start.forecast, "/dY_", len, "_L_list.csv", sep=""))
+  dir.create(paste(prefix, "ssa/params/", start.forecast, "/", sep=""), showWarnings = FALSE)
+  write.csv(L.list, paste(prefix, "ssa/params/", start.forecast, "/x_", len, "_L_list.csv", sep=""))
+  write.csv(L.list, paste(prefix, "ssa/params/", start.forecast, "/y_", len, "_L_list.csv", sep=""))
+  write.csv(lodL.list, paste(prefix, "ssa/params/", start.forecast, "/LOD_", len, "_L_list.csv", sep=""))
+  write.csv(dL.list, paste(prefix, "ssa/params/", start.forecast, "/dX_", len, "_L_list.csv", sep=""))
+  write.csv(dL.list, paste(prefix, "ssa/params/", start.forecast, "/dY_", len, "_L_list.csv", sep=""))
   if(for.today) {
-    write.csv(L.list, paste("today/x_", len, "_L_list.csv", sep=""))
-    write.csv(L.list, paste("today/y_", len, "_L_list.csv", sep=""))
-    write.csv(lodL.list, paste("today/LOD_", len, "_L_list.csv", sep=""))
-    write.csv(dL.list, paste("today/dX_", len, "_L_list.csv", sep=""))
-    write.csv(dL.list, paste("today/dY_", len, "_L_list.csv", sep=""))
+    write.csv(L.list, paste(prefix, "today/x_", len, "_L_list.csv", sep=""))
+    write.csv(L.list, paste(prefix, "today/y_", len, "_L_list.csv", sep=""))
+    write.csv(lodL.list, paste(prefix, "today/LOD_", len, "_L_list.csv", sep=""))
+    write.csv(dL.list, paste(prefix, "today/dX_", len, "_L_list.csv", sep=""))
+    write.csv(dL.list, paste(prefix, "today/dY_", len, "_L_list.csv", sep=""))
   }
   
   # index corresponding to the beginning of forecast
@@ -127,9 +128,9 @@ get.forecast <- function(start.forecast, len, L.list, lodL.list, dL.list, pn, lo
                        dX=c(dxp[[1]], dxp[[2]]),
                        dY=c(dyp[[1]], dyp[[2]])
   )
-  write.csv(params, paste("ssa/params/", start.forecast, "/", len, "params.csv", sep=""))
+  write.csv(params, paste(prefix, "ssa/params/", start.forecast, "/", len, "params.csv", sep=""))
   if(for.today) {
-    write.csv(params, paste("today/", len, "params.csv", sep=""))
+    write.csv(params, paste(prefix, "today/", len, "params.csv", sep=""))
   }
   
   df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = rf.x, y = rf.y, LOD = rf.lod, dX = rf.dx, dY = rf.dy)
@@ -150,7 +151,7 @@ my.write <- function(x, file, header, f = write.table, ...) {
 }
 
 if(!mjd.given) {
-  finals2000 <- read.csv(paste("csv/", start.forecast - 1, "/finals2000A.daily.csv", sep=""), sep=";")
+  finals2000 <- read.csv(paste(prefix, "csv/", start.forecast - 1, "/finals2000A.daily.csv", sep=""), sep=";")
   
   last.mjd.c04 <- c04[nrow(c04), "MJD"]
   mjd.from <- last.mjd.c04 + 1
@@ -180,8 +181,8 @@ df.90 <- get.forecast(start.forecast, 90,
                       dL.list=c(200, 250, 270, 300, 320),
                       pn=30, lodn=30, dpn=5, years=20, dyears=20, steps=12, for.today=TRUE)
 
-output.file.name.365 <- paste("ssa/", start.forecast, "_ssa_spbu_365.txt", sep = "")
-output.file.name.90 <- paste("ssa/", start.forecast, "_ssa_spbu_90.txt", sep = "")
+output.file.name.365 <- paste(prefix, "ssa/", start.forecast, "_ssa_spbu_365.txt", sep = "")
+output.file.name.90 <- paste(prefix, "ssa/", start.forecast, "_ssa_spbu_90.txt", sep = "")
 
 my.write(format(df.365, scientific = FALSE), file = output.file.name.365,
          header = "# MJD\t\t\tx\t\t\ty\t\t\tLOD\t\t\tdX\t\t\tdY",
@@ -192,8 +193,8 @@ my.write(format(df.90, scientific = FALSE), file = output.file.name.90,
          row.names=FALSE, col.names = FALSE, sep = "\t", quote = FALSE)
 
 if(!mjd.given) {
-  output.file.name.today.365 <- "today/ssa_spbu_365.txt"
-  output.file.name.today.90 <- "today/ssa_spbu_90.txt"
+  output.file.name.today.365 <- paste(prefix, "today/ssa_spbu_365.txt", sep="")
+  output.file.name.today.90 <- paste(prefix, "today/ssa_spbu_90.txt", sep="")
   
   my.write(format(df.365, scientific = FALSE), file = output.file.name.today.365,
          header = "# MJD\t\t\tx\t\t\ty\t\t\tLOD\t\t\tdX\t\t\tdY",
