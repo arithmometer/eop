@@ -14,7 +14,8 @@ date.string <- format(Sys.time(), "%Y-%m-%d")
 start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
 }
 
-prefix <- "/srv/shiny-server/eop/"
+# prefix <- "/srv/shiny-server/eop/"
+prefix <- "/home/grigory/data/R/eop/"
 
 url <- "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04_IAU2000.62-now"
 destfile <- paste(prefix, "eopc04_IAU2000.62-now.txt", sep="")
@@ -171,14 +172,14 @@ if(!mjd.given) {
 }
 
 df.365 <- get.forecast(start.forecast, 365,
-                       L.list=c(400, 500, 550, 600, 650),
-                       lodL.list=c(2700, 2750, 2800, 2850, 3000),
-                       dL.list=c(250, 270, 300, 320),
+                       L.list=c(400, 500, 550, 600, 650, 700, 800, 1000),
+                       lodL.list=c(2500, 2700, 2750, 2800, 2850, 3000, 4000),
+                       dL.list=c(200, 250, 270, 300, 320, 400),
                        pn=30, lodn=30, dpn=5, years=20, dyears=20, steps=5, for.today=TRUE)
 df.90 <- get.forecast(start.forecast, 90,
-                      L.list=c(300, 350, 400, 450, 500),
-                      lodL.list=c(500, 550, 600, 650, 800),
-                      dL.list=c(200, 250, 270, 300, 320),
+                      L.list=c(300, 350, 400, 450, 500, 600),
+                      lodL.list=c(500, 550, 600, 650, 800, 1000),
+                      dL.list=c(200, 250, 270, 300, 320, 350),
                       pn=30, lodn=30, dpn=5, years=20, dyears=20, steps=12, for.today=TRUE)
 
 output.file.name.365 <- paste(prefix, "ssa/", start.forecast, "_ssa_spbu_365.txt", sep = "")

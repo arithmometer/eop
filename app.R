@@ -46,12 +46,6 @@ server <- function(input, output, clientData, session) {
     contentType = "text/plain"
   )
   
-  get_ssa_today <- reactive({
-    ssa.forecast <- read.table("today/ssa_spbu_365.txt")
-    colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
-    ssa.forecast
-  })
-  
   get_compare_mjd <- reactive({
     mjd <- as.integer(as.Date(input$date_compare) - as.Date("1858-11-17"))
     mjd
@@ -67,7 +61,8 @@ server <- function(input, output, clientData, session) {
   # check if these files do exist!
   get_pul_am <- reactive({
     mjd <- get_compare_mjd()
-    am_pul <- read.table(paste("pul/", mjd - 1, "_am_pul.txt", sep = ""), skip=1) # pul/55434_am_pul.txt
+    am_pul <- tryCatch({read.table(paste("pul/", mjd - 1, "_am_pul.txt", sep = ""), skip=1)},
+             silent = TRUE, condition = function(err) { NA } )
     colnames(am_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
     am_pul$dX <- am_pul$dX * 10**(-3)
     am_pul$dY <- am_pul$dY * 10**(-3)
@@ -77,7 +72,8 @@ server <- function(input, output, clientData, session) {
 
   get_pul_e1 <- reactive({
     mjd <- get_compare_mjd()
-    e1_pul <- read.table(paste("pul/", mjd - 1, "_e1_pul.txt", sep = ""), skip=1) # pul/55434_am_pul.txt
+    e1_pul <- tryCatch({read.table(paste("pul/", mjd - 1, "_e1_pul.txt", sep = ""), skip=1)},
+             silent = TRUE, condition = function(err) { NA } )
     colnames(e1_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
     e1_pul$dX <- e1_pul$dX * 10**(-3)
     e1_pul$dY <- e1_pul$dY * 10**(-3)
@@ -95,63 +91,7 @@ server <- function(input, output, clientData, session) {
   })
   
   eop.list <- list("x", "y", "LOD", "dX", "dY")
-  
-  lapply(eop.list, function(eop) {
-    output[[paste(eop, "_today", sep="")]] <- renderPlotly({
-      if(input$"mjd_labels") {
-        lab <- "MJD"
-        ticks <- forecast.mjd():(forecast.mjd()+364)
-      } else {
-        lab <- "Date"
-        start.date <- mjd_to_date(forecast.mjd())
-        tm <- seq(0, 364, by = 1)
-        ticks <- start.date + tm
-      }
-      
-      plot_ly(y=get_ssa_today()[[eop]], x=~ticks, type="scatter", mode="lines") %>% 
-        layout(xaxis=list(title=lab)) %>% 
-        layout(yaxis=list(title=eop))
-    })  
-  })
-
-  lapply(eop.list, function(eop) {
-    output[[paste(eop, "_dists", sep="")]] <- renderUI({
-      L_list <- read.csv(paste("today/", eop, "_365_L_list.csv", sep=""))
-      do.call(tabsetPanel, lapply(L_list$x, function(L) {
-        dists <- read.csv(paste("today/", eop, "_365_", L, "_dists.csv", sep=""))
-        output[[paste(eop, "_dists_365_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
-                                                                     layout(xaxis=list(title="Number of components")) %>% 
-                                                                     layout(yaxis=list(title="MSE")))
-        tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste(eop, "_dists_365_", L, sep="")))
-      }))
-    })
-  })
-  
-  output$tabset_eop <- renderUI({
-    do.call(tabsetPanel, lapply(eop.list, function(eop) {
-      tabPanel(eop,
-        h4("Choice of parameters for this forecast:"),
-        verbatimTextOutput(paste(eop, "_params_365", sep="")),
-        h4(eop),
-        plotlyOutput(paste(eop, "_today", sep="")),
-        tags$br(),
-        h4("MSE"),
-        uiOutput(paste(eop, "_dists", sep=""))
-      )
-    }))
-  })
-  
-  get_params_today_365 <- reactive({
-    params <- read.csv("today/365params.csv")
-    params
-  })
-  
-  lapply(eop.list, function(eop) {
-    output[[paste(eop, "_params_365", sep="")]] <- reactive({
-      params <- get_params_today_365()
-      sprintf("L: %d\np: %d", params[[eop]][1], params[[eop]][2])
-    })
-  })
+  days.len <- list(365, 90)
   
   legend.names <- c("C04", "SSA", "Pul AM", "Pul E1")
   legend.colors <- c("black", "blue", "orange", "green")
@@ -160,9 +100,65 @@ server <- function(input, output, clientData, session) {
   series.names <- c("SSA", "Pul AM", "Pul E1")
   series.getters <- list(get_ssa, get_pul_am, get_pul_e1)
   
+  lapply(days.len, function(days) {
+    lapply(eop.list, function(eop) {
+      output[[paste(eop, "_today_", days, sep="")]] <- renderPlotly({
+        if(input[[paste("mjd_labels_", days, sep="")]]) {
+          lab <- "MJD"
+          ticks <- forecast.mjd():(forecast.mjd()+days-1)
+        } else {
+          lab <- "Date"
+          start.date <- mjd_to_date(forecast.mjd())
+          tm <- seq(0, days-1, by = 1)
+          ticks <- start.date + tm
+        }
+        
+        ssa.forecast <- read.table(paste("today/ssa_spbu_", days, ".txt", sep=""))
+        colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
+        
+        plot_ly(y=ssa.forecast[[eop]], x=~ticks, type="scatter", mode="lines") %>% 
+          layout(xaxis=list(title=lab)) %>% 
+          layout(yaxis=list(title=eop))
+      })  
+    })
+    
+    lapply(eop.list, function(eop) {
+      output[[paste(eop, "_dists_", days, sep="")]] <- renderUI({
+        L_list <- read.csv(paste("today/", eop, "_", days, "_L_list.csv", sep=""))
+        do.call(tabsetPanel, lapply(L_list$x, function(L) {
+          dists <- read.csv(paste("today/", eop, "_", days, "_", L, "_dists.csv", sep=""))
+          output[[paste(eop, "_dists_", days, "_", L, sep="")]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
+                                                                           layout(xaxis=list(title="Number of components")) %>% 
+                                                                           layout(yaxis=list(title="MSE")))
+          tabPanel(paste("L = ", L, sep=""), plotlyOutput(paste(eop, "_dists_", days, "_", L, sep="")))
+        }))
+      })
+    })
+    
+    output[[paste("tabset_eop_", days, sep="")]] <- renderUI({
+      do.call(tabsetPanel, lapply(eop.list, function(eop) {
+        tabPanel(eop,
+                 h4("Choice of parameters for this forecast:"),
+                 verbatimTextOutput(paste(eop, "_params_", days, sep="")),
+                 h4(eop),
+                 plotlyOutput(paste(eop, "_today_", days, sep="")),
+                 tags$br(),
+                 h4("MSE"),
+                 uiOutput(paste(eop, "_dists_", days, sep=""))
+        )
+      }))
+    })
+    
+    lapply(eop.list, function(eop) {
+      output[[paste(eop, "_params_", days, sep="")]] <- reactive({
+        params <- read.csv(paste("today/", days, "params.csv", sep=""))
+        sprintf("L: %d\np: %d", params[[eop]][1], params[[eop]][2])
+      })
+    })
+  })
+  
   lapply(eop.list, function(eop) {
     output[[paste(eop, "_comparison", sep="")]] <- renderPlotly({
-      chosen <- c(TRUE, FALSE, FALSE, FALSE)
       mjd <- get_compare_mjd()
       ind <- mjd - 37664
       
@@ -182,7 +178,12 @@ server <- function(input, output, clientData, session) {
       n <- length(series.list)
       for(i in 1:n) {
         if(series.list[i] %in% input$displaySeries) {
-          p <- p %>% add_trace(y = series.getters[[i]]()[1:365, eop], name = series.names[i])
+          series <- series.getters[[i]]()
+          if(is.na(series)) {
+            showNotification(paste(series.names[i], "is not available.", sep=" "))
+          } else {
+            p <- p %>% add_trace(y = series[1:365, eop], name = series.names[i])
+          }
         }
       }
       p
@@ -218,32 +219,49 @@ ui = tagList(
   navbarPage(
     theme = shinytheme("spacelab"),
     "EOP Forecast",
-    tabPanel("Forecast of today",
+    tabPanel("Forecast for 365 days",
              sidebarPanel(
                h4("MJD of today"),
                verbatimTextOutput("mjd"),
+               # verbatimTextOutput("mjd"),
                h4("Starting MJD of forecast"),
                verbatimTextOutput("forecast.mjd"),
-               checkboxInput("mjd_labels", "MJD labels", FALSE),
+               checkboxInput("mjd_labels_365", "MJD labels", FALSE),
+               tags$hr(),
+               p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
+               tags$hr(),
+               p("Download forecasts:"),
+               downloadButton("downloadForecast365", label = "Download 365 days"),
+               tags$br()
+             ),
+             mainPanel(
+               uiOutput("tabset_eop_365")
+             )
+    ),
+    tabPanel("Forecast for 90 days",
+             sidebarPanel(
+               # h4("MJD of today"),
+               # verbatimTextOutput("mjd"),
+               # h4("Starting MJD of forecast"),
+               # verbatimTextOutput("forecast.mjd"),
+               checkboxInput("mjd_labels_90", "MJD labels", FALSE),
                tags$hr(),
                p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
                tags$hr(),
                p("Download forecasts:"),
                downloadButton("downloadForecast90", label = "Download 90 days"),
-               tags$br(),
-               downloadButton("downloadForecast365", label = "Download 365 days"),
                tags$br()
              ),
              mainPanel(
-               uiOutput("tabset_eop")
+               uiOutput("tabset_eop_90")
              )
     ),
     tabPanel("Compare Forecasts",
              sidebarPanel(
-               p("Date input is limited between 27.08.2010 and 1.02.2016"),
+               p("Date input is limited between 27.08.2010 and 1.03.2016"),
                tags$hr(),
                dateInput("date_compare", label="Choose starting date", value="2010-08-27",
-                         min="2010-08-26", max="2017-02-04",
+                         min="2010-08-26", max="2016-03-01",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
                checkboxInput("mjd_compare_labels", "MJD labels", FALSE),
