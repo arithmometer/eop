@@ -203,7 +203,7 @@ server <- function(input, output, clientData, session) {
     sum((a - b)**2) / n
   }
   
-  output$comparison_table <- renderTable({
+  output$comparison_table <- DT::renderDataTable({
     df <- data.frame(x=double(), y=double(), LOD=double(), dX=double(), dY=double())
     mjd <- get_compare_mjd()
     ind <- mjd - 37664
@@ -223,7 +223,11 @@ server <- function(input, output, clientData, session) {
         }
       }
     }
-    df
+    DT::datatable(df,
+                  options=list(pageLength=10, 
+                               # lengthMenu=list(c(5, 10, 30, 100, -1), c('5', '10', '30', '100', 'Все')),
+                               searching=FALSE
+                  ))
   }, include.rownames=TRUE, digits=10)
   
   values <- reactiveValues()
@@ -370,13 +374,14 @@ ui = tagList(
                checkboxInput("mjd_compare_labels", "MJD labels", FALSE),
                tags$hr(),
                selectizeInput(
-                 'displaySeries', 'Series to display', choices=
-                   list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1"), multiple=TRUE
+                 'displaySeries', 'Series to display',
+                 choices=list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1"), multiple=TRUE,
+                 selected=list("ssa", "pul_am", "pul_e1")
                )
              ),
              mainPanel(
                h4("MSE"),
-               tableOutput("comparison_table"),
+               DT::dataTableOutput("comparison_table"),
                tags$hr(),
                h4("Pole x"),
                plotlyOutput("x_comparison"),
