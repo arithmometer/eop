@@ -203,5 +203,5 @@ if(!mjd.given) {
          header = "# MJD\t\t\tx\t\t\ty\t\t\tLOD\t\t\tdX\t\t\tdY",
          row.names=FALSE, col.names = FALSE, sep = "\t", quote = FALSE)
   
-  write.csv(data.frame(start.forecast=start.forecast), "today/start_forecast.csv")
+  write.csv(data.frame(start.forecast=start.forecast), paste(prefix, "today/start_forecast.csv", sep=""))
 }
