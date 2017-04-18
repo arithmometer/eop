@@ -15,13 +15,14 @@ start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
 }
 
 prefix <- "/srv/shiny-server/eop/"
+# prefix <- "/home/grigory/data/R/eop/"
 
 url <- "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04_IAU2000.62-now"
 destfile <- paste(prefix, "eopc04_IAU2000.62-now.txt", sep="")
-download.file(url, destfile, method = "auto", quiet=TRUE)
-if(!file.exists(destfile)) {
-  stop("c04 file does not exist", call.=FALSE)
-}
+# download.file(url, destfile, method = "auto", quiet=TRUE)
+# if(!file.exists(destfile)) {
+#   stop("c04 file does not exist", call.=FALSE)
+# }
 
 c04 <- read.table(destfile, comment.char = "#", skip = 14)
 colnames(c04) <- c("Year", "Month", "Day", "MJD", "x", "y", "UT1-UTC", "LOD",
