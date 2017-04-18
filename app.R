@@ -56,8 +56,11 @@ server <- function(input, output, clientData, session) {
   
   get_ssa <- reactive({
     mjd <- get_compare_mjd()
-    ssa.forecast <- read.table(paste("ssa/", mjd, "_ssa_spbu_365.txt", sep="")) # ssa/55434_ssa_spbu_365.txt
-    colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
+    ssa.forecast <- tryCatch({read.table(paste("ssa/", mjd, "_ssa_spbu_365.txt", sep=""))},
+                       silent = TRUE, condition = function(err) { NA } )
+    if(!is.na(ssa.forecast)) {
+      colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
+    }
     ssa.forecast
   })
 
@@ -87,6 +90,26 @@ server <- function(input, output, clientData, session) {
     }
     e1_pul
   })
+  
+  get_a <- reactive({
+    mjd <- get_compare_mjd()
+    date.string <- mjd_to_date(mjd)
+    year <- as.numeric(format(as.Date(date.string), '%Y'))
+    volume <- year - 1987
+    week <- as.numeric(format(as.Date(date.string), '%U'))
+    filename <- sprintf("ba/bulletina-%s-%03d.txt", tolower(as.roman(volume)), week)
+    ba <- tryCatch({read.csv(filename, sep=";")},
+                       silent = TRUE, condition = function(err) { NA } )
+    if(!is.na(ba)) {
+      colnames(ba) <- c("MJD", "Year", "Month", "Day", "Type", "x", "sigma_x", "y", "sigma_y",
+                        "Type.1", "UT1.UTC", "sigma_UT1.UTC", "LOD", "sigma_LOD", "Type.2",
+                        "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
+                        "dY", "sigma_dY")
+    }
+    ind <- which(ba[, "MJD"] == mjd)
+    n <- min(nrow(ba), 365)
+    ba[ind:n, ]
+  })
 
   get_final <- reactive({
     mjd <- get_compare_mjd()
@@ -100,12 +123,12 @@ server <- function(input, output, clientData, session) {
   eop.list <- list("x", "y", "LOD", "dX", "dY")
   days.len <- list(365, 90)
   
-  legend.names <- c("C04", "SSA", "Pul AM", "Pul E1")
-  legend.colors <- c("black", "blue", "orange", "green")
+  legend.names <- c("C04", "SSA", "Pul AM", "Pul E1", "Bull A")
+  legend.colors <- c("black", "blue", "orange", "green", "purple")
   
-  series.list <- c("ssa", "pul_am", "pul_e1")
-  series.names <- c("SSA", "Pul AM", "Pul E1")
-  series.getters <- list(get_ssa, get_pul_am, get_pul_e1)
+  series.list <- c("ssa", "pul_am", "pul_e1", "ba")
+  series.names <- c("SSA", "Pul AM", "Pul E1", "Bull A")
+  series.getters <- list(get_ssa, get_pul_am, get_pul_e1, get_a)
   
   lapply(days.len, function(days) {
     lapply(eop.list, function(eop) {
@@ -213,12 +236,22 @@ server <- function(input, output, clientData, session) {
         series <- series.getters[[i]]()
         if(!is.na(series)) {
           rn <- rownames(df)
-          df <- rbind(df, data.frame(
-            x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
-            y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
-            LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
-            dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
-            dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+          if(series.list[i] == "ba") {
+            n <- nrow(df)
+            df <- rbind(df, data.frame(
+              x=  MSE(get_final()[(ind):(ind + n - 1), "x"],   series[1:n, "x"], n),
+              y=  MSE(get_final()[(ind):(ind + n - 1), "y"],   series[1:n, "y"], n),
+              LOD=NA,
+              dX= NA,
+              dY= NA))
+          } else {
+            df <- rbind(df, data.frame(
+              x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
+              y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
+              LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
+              dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
+              dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+          }
           rownames(df) <- c(rn, series.names[i])
         }
       }
@@ -375,8 +408,8 @@ ui = tagList(
                tags$hr(),
                selectizeInput(
                  'displaySeries', 'Series to display',
-                 choices=list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1"), multiple=TRUE,
-                 selected=list("ssa", "pul_am", "pul_e1")
+                 choices=list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1", "Bulletin A"="ba"), multiple=TRUE,
+                 selected=list("ssa", "pul_am", "pul_e1", "ba")
                )
              ),
              mainPanel(
