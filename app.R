@@ -102,9 +102,12 @@ server <- function(input, output, clientData, session) {
                        silent = TRUE, condition = function(err) { NA } )
     if(!is.na(ba)) {
       colnames(ba) <- c("MJD", "Year", "Month", "Day", "Type", "x", "sigma_x", "y", "sigma_y",
-                        "Type.1", "UT1.UTC", "sigma_UT1.UTC", "LOD", "sigma_LOD", "Type.2",
+                        # "Type.1", "UT1.UTC", "sigma_UT1.UTC", "LOD", "sigma_LOD", "Type.2",
+                        "Type.1", "LOD", "sigma_UT1.UTC", "LOD2", "sigma_LOD", "Type.2",
                         "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
                         "dY", "sigma_dY")
+      lod <- -diff(ba[, "LOD"])
+      ba[, "LOD"] <- c(lod[1], lod)
     }
     ind <- which(ba[, "MJD"] == mjd)
     n <- min(nrow(ba), 365)
@@ -241,7 +244,7 @@ server <- function(input, output, clientData, session) {
             df <- rbind(df, data.frame(
               x=  MSE(get_final()[(ind):(ind + n - 1), "x"],   series[1:n, "x"], n),
               y=  MSE(get_final()[(ind):(ind + n - 1), "y"],   series[1:n, "y"], n),
-              LOD=NA,
+              LOD=MSE(get_final()[(ind):(ind + n - 1), "LOD"], series[1:n, "LOD"], n),
               dX= NA,
               dY= NA))
           } else {
