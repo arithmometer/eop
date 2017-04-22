@@ -12,3 +12,10 @@ log
 today/*
 ba
 old.ssa
+debug.csv
+rssa/
+rtoday/
+vssa/
+vtoday/
+test_generate_forecast.R
+
