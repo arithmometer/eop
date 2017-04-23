@@ -131,7 +131,6 @@ server <- function(input, output, session) {
     volume <- year - 1987
     week <- as.numeric(format(as.Date(date.string), '%U'))
     filename <- sprintf("ba/bulletina-%s-%03d.txt", tolower(as.roman(volume)), week)
-    write.csv(mjd, "debug.csv")
     ba <- tryCatch({read.csv(filename, sep=";")},
                    silent = TRUE, condition = function(err) { NA } )
     if(!is.na(ba)) {
@@ -141,10 +140,11 @@ server <- function(input, output, session) {
                         "dY", "sigma_dY")
       lod <- -diff(ba[, "LOD"])
       ba[, "LOD"] <- c(lod, lod[length(lod)])
+      ind <- which(ba[, "MJD"] == mjd)
+      n <- min(nrow(ba), 365)
+      ba <- ba[ind:n, ]
     }
-    ind <- which(ba[, "MJD"] == mjd)
-    n <- min(nrow(ba), 365)
-    ba[ind:n, ]
+    ba
   })
 
   get_final <- reactive({

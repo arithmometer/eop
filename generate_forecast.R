@@ -25,7 +25,7 @@ if(length(args) > 0) {
 } else {
   date.string <- format(Sys.time(), "%Y-%m-%d")
   # put to start.forecast MJD of today
-  start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17")) - 1
+  start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
 }
 
 # prefix <- "/srv/shiny-server/eop/"
