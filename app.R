@@ -4,8 +4,8 @@ library(shinythemes)
 library(Rssa)
 
 server <- function(input, output, session) {
-  prefix <- "/srv/shiny-server/eop/"
-  # prefix <- "/home/grigory/data/R/eop/"
+  # prefix <- "/srv/shiny-server/eop/"
+  prefix <- "/home/grigory/data/R/eop/"
   
   mjd.today <- reactive({
     date.string <- format(Sys.time(), "%Y-%m-%d")
@@ -150,9 +150,12 @@ server <- function(input, output, session) {
   get_final <- reactive({
     mjd <- get_compare_mjd()
     c04.file <- "eopc04_IAU2000.62-now.txt"
-    c04 <- read.table(c04.file, comment.char = "#", skip = 14)
-    colnames(c04) <- c("Year", "Month", "Day", "MJD", "x", "y", "UT1-UTC",
-                       "LOD", "dX", "dY", "x Err", "y Err", "UT1-UTC err", "LOD err", "dX err", "dY err")
+    c04 <- tryCatch({read.table(c04.file, comment.char = "#", skip = 14)},
+                   silent = TRUE, condition = function(err) { NA } )
+    if(!is.na(c04)) {
+      colnames(c04) <- c("Year", "Month", "Day", "MJD", "x", "y", "UT1-UTC",
+                         "LOD", "dX", "dY", "x Err", "y Err", "UT1-UTC err", "LOD err", "dX err", "dY err")
+    }
     c04
   })
   
@@ -248,21 +251,28 @@ server <- function(input, output, session) {
         layout(yaxis=list(title=eop))
       n <- length(series.list)
       for(i in 1:n) {
-        if(series.list[i] %in% input$displaySeries) {
-          series <- series.getters[[i]]()
-          if(is.na(series)) {
-            if(eop == "x") {
-              showNotification(paste(series.names[i], "is not available.", sep=" "), type="error")
-            }
+        series <- series.getters[[i]]()
+        if(is.na(series)) {
+          if(eop == "x") {
+            showNotification(paste(series.names[i], "is not available.", sep=" "), type="error")
+          }
+        } else {
+          if(series.list[i] == "ba") {
+            p <- p %>% add_trace(x = ticks[1:nrow(series)], y = series[1:nrow(series), eop], name = series.names[i])
           } else {
-            if(series.list[i] == "ba") {
-              p <- p %>% add_trace(x = ticks[1:nrow(series)], y = series[1:nrow(series), eop], name = series.names[i])
-            } else {
-              p <- p %>% add_trace(y = series[1:365, eop], name = series.names[i])
-            }
+            p <- p %>% add_trace(y = series[1:365, eop], name = series.names[i])
           }
         }
       }
+      # if(length(input$combineSeries) > 1) {
+      #   series <- rep(0, 365)
+      #   for(i in 1:length(series.list)) {
+      #     if(series.list[i] %in% input$combineSeries) {
+      #       series <- series + series.getters[[i]]()
+      #     }
+      #   }
+      #   p <- p %>% add_trace(x = ticks[1:nrow(series)], y = series[1:nrow(series), eop], name = paste(input$combineSeries, collapse="+"))
+      # }
       p
     })
   })
@@ -277,29 +287,47 @@ server <- function(input, output, session) {
     ind <- mjd - 37664
     n <- length(series.list)
     for(i in 1:n) {
-      if(series.list[i] %in% input$displaySeries) {
-        series <- series.getters[[i]]()
-        if(!is.na(series)) {
-          rn <- rownames(df)
-          if(series.list[i] == "ba") {
-            n <- nrow(series)
-            df <- rbind(df, data.frame(
-              x=  MSE(get_final()[(ind):(ind + n - 1), "x"],   series[1:n, "x"], n),
-              y=  MSE(get_final()[(ind):(ind + n - 1), "y"],   series[1:n, "y"], n),
-              LOD=MSE(get_final()[(ind):(ind + n - 1), "LOD"], series[1:n, "LOD"], n),
-              dX= NA,
-              dY= NA))
-          } else {
-            df <- rbind(df, data.frame(
-              x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
-              y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
-              LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
-              dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
-              dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
-          }
-          rownames(df) <- c(rn, series.names[i])
+      series <- series.getters[[i]]()
+      if(!is.na(series)) {
+        rn <- rownames(df)
+        if(series.list[i] == "ba") {
+          n <- nrow(series)
+          df <- rbind(df, data.frame(
+            x=  MSE(get_final()[(ind):(ind + n - 1), "x"],   series[1:n, "x"], n),
+            y=  MSE(get_final()[(ind):(ind + n - 1), "y"],   series[1:n, "y"], n),
+            LOD=MSE(get_final()[(ind):(ind + n - 1), "LOD"], series[1:n, "LOD"], n),
+            dX= NA,
+            dY= NA))
+        } else {
+          df <- rbind(df, data.frame(
+            x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
+            y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
+            LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
+            dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
+            dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+        }
+        rownames(df) <- c(rn, series.names[i])
+      }
+    }
+    if(length(input$combineSeries) > 1) {
+      rn <- rownames(df)
+      series <- rep(0, 365)
+      for(i in 1:length(series.list)) {
+        if(series.list[i] %in% input$combineSeries) {
+          series[, "x"] <- series[, "x"] + series.getters[[i]]()[, "x"]
+          series[, "y"] <- series[, "y"] + series.getters[[i]]()[, "y"]
+          series[, "LOD"] <- series[, "LOD"] + series.getters[[i]]()[, "LOD"]
+          series[, "dX"] <- series[, "dX"] + series.getters[[i]]()[, "dX"]
+          series[, "dY"] <- series[, "dY"] + series.getters[[i]]()[, "dY"]
         }
       }
+      df <- rbind(df, data.frame(
+        x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
+        y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
+        LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
+        dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
+        dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+      rownames(df) <- c(rn, paste(input$combineSeries, collapse = "+"))
     }
     DT::datatable(df,
                   options=list(pageLength=10,
@@ -473,15 +501,14 @@ ui = tagList(
                p("Date input is limited between 27.08.2010 and 1.03.2016"),
                tags$hr(),
                dateInput("date_compare", label="Choose starting date", value="2015-12-11",
-                         min="2010-08-26", max="2016-03-01",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
                checkboxInput("mjd_compare_labels", "MJD labels", FALSE),
                tags$hr(),
                selectizeInput(
-                 'displaySeries', 'Series to display',
+                 "combineSeries", "Series to combine",
                  choices=list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1", "Bulletin A"="ba"), multiple=TRUE,
-                 selected=list("ssa", "pul_am", "pul_e1", "ba")
+                 selected=list("ssa")
                )
              ),
              mainPanel(
