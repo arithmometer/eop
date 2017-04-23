@@ -4,8 +4,8 @@ library(shinythemes)
 library(Rssa)
 
 server <- function(input, output, session) {
-  # prefix <- "/srv/shiny-server/eop/"
-  prefix <- "/home/grigory/data/R/eop/"
+  prefix <- "/srv/shiny-server/eop/"
+  # prefix <- "/home/grigory/data/R/eop/"
   
   mjd.today <- reactive({
     date.string <- format(Sys.time(), "%Y-%m-%d")
@@ -264,15 +264,26 @@ server <- function(input, output, session) {
           }
         }
       }
-      # if(length(input$combineSeries) > 1) {
-      #   series <- rep(0, 365)
-      #   for(i in 1:length(series.list)) {
-      #     if(series.list[i] %in% input$combineSeries) {
-      #       series <- series + series.getters[[i]]()
-      #     }
-      #   }
-      #   p <- p %>% add_trace(x = ticks[1:nrow(series)], y = series[1:nrow(series), eop], name = paste(input$combineSeries, collapse="+"))
-      # }
+      
+      if(length(input$combineSeries) > 1) {
+        series <- rep(0, 365)
+        name <- c()
+        for(i in 1:(length(series.list)-1)) {
+          if(series.list[i] %in% input$combineSeries) {
+            if(is.na(series.getters[[i]]())) {
+              series <- NA
+              break
+            }
+            series <- series + series.getters[[i]]()[1:365, eop]
+            name <- c(name, series.names[i])
+          }
+        }
+        if(!is.na(series)) {
+          cn <- length(input$combineSeries)
+          series <- series / cn
+          p <- p %>% add_trace(x = ticks[1:length(series)], y = series, name = paste(name, collapse="+"))
+        }
+      }
       p
     })
   })
@@ -311,23 +322,37 @@ server <- function(input, output, session) {
     }
     if(length(input$combineSeries) > 1) {
       rn <- rownames(df)
-      series <- rep(0, 365)
-      for(i in 1:length(series.list)) {
+      series <- data.frame(x=rep(0, 365), y=rep(0, 365), LOD=rep(0, 365), dX=rep(0, 365), dY=rep(0, 365))
+      name <- c()
+      for(i in 1:(length(series.list)-1)) {
         if(series.list[i] %in% input$combineSeries) {
-          series[, "x"] <- series[, "x"] + series.getters[[i]]()[, "x"]
-          series[, "y"] <- series[, "y"] + series.getters[[i]]()[, "y"]
-          series[, "LOD"] <- series[, "LOD"] + series.getters[[i]]()[, "LOD"]
-          series[, "dX"] <- series[, "dX"] + series.getters[[i]]()[, "dX"]
-          series[, "dY"] <- series[, "dY"] + series.getters[[i]]()[, "dY"]
+          if(is.na(series.getters[[i]]())) {
+            series <- NA
+            break
+          }
+          series[, "x"] <- series[, "x"] + series.getters[[i]]()[1:365, "x"]
+          series[, "y"] <- series[, "y"] + series.getters[[i]]()[1:365, "y"]
+          series[, "LOD"] <- series[, "LOD"] + series.getters[[i]]()[1:365, "LOD"]
+          series[, "dX"] <- series[, "dX"] + series.getters[[i]]()[1:365, "dX"]
+          series[, "dY"] <- series[, "dY"] + series.getters[[i]]()[1:365, "dY"]
+          name <- c(name, series.names[i])
         }
       }
-      df <- rbind(df, data.frame(
-        x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
-        y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
-        LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
-        dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
-        dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
-      rownames(df) <- c(rn, paste(input$combineSeries, collapse = "+"))
+      if(!is.na(series)) {
+        cn <- length(input$combineSeries)
+        series[, "x"] <- series[, "x"] / cn
+        series[, "y"] <- series[, "y"] / cn
+        series[, "LOD"] <- series[, "LOD"] / cn
+        series[, "dX"] <- series[, "dX"] / cn
+        series[, "dY"] <- series[, "dY"] / cn
+        df <- rbind(df, data.frame(
+          x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
+          y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
+          LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
+          dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
+          dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+        rownames(df) <- c(rn, paste(name, collapse = "+"))
+      }
     }
     DT::datatable(df,
                   options=list(pageLength=10,
