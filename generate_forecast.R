@@ -28,8 +28,8 @@ if(length(args) > 0) {
   start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
 }
 
-# prefix <- "/srv/shiny-server/eop/"
-prefix <- "/home/grigory/data/R/eop/"
+prefix <- "/srv/shiny-server/eop/"
+# prefix <- "/home/grigory/data/R/eop/"
 
 url <- "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04_IAU2000.62-now"
 destfile <- paste(prefix, "eopc04_IAU2000.62-now.txt", sep="")

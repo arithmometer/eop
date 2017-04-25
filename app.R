@@ -130,6 +130,10 @@ server <- function(input, output, session) {
     year <- as.numeric(format(as.Date(date.string), '%Y'))
     volume <- year - 1987
     week <- as.numeric(format(as.Date(date.string), '%U'))
+    day <- as.numeric(format(as.Date(date.string), '%u'))
+    if(day < 6) {
+      week <- week - 1
+    }
     filename <- sprintf("ba/bulletina-%s-%03d.txt", tolower(as.roman(volume)), week)
     ba <- tryCatch({read.csv(filename, sep=";")},
                    silent = TRUE, condition = function(err) { NA } )
