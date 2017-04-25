@@ -17,7 +17,7 @@ server <- function(input, output, session) {
   })
   
   forecast.mjd <- reactive({
-    read.csv("rtoday/start_forecast.csv")$start.forecast
+    read.csv(paste0(prefix, "rtoday/start_forecast.csv"))$start.forecast
   })
   
   output$forecast.mjd <- reactive({
@@ -30,22 +30,22 @@ server <- function(input, output, session) {
   
   output$downloadForecast365 <- downloadHandler(
     filename <- function() {
-      paste0(forecast.mjd(), "_ssa_spbu_365.txt")
+      paste0(prefix, forecast.mjd(), "_ssa_spbu_365.txt")
     },
     
     content <- function(file) {
-      file.copy(paste0("rssa/", forecast.mjd(), "_ssa_spbu_365.txt"), file)
+      file.copy(paste0(prefix, "rssa/", forecast.mjd(), "_ssa_spbu_365.txt"), file)
     },
     contentType = "text/plain"
   )
   
   output$downloadForecast90 <- downloadHandler(
     filename <- function() {
-      paste0(forecast.mjd(), "_ssa_spbu_90.txt")
+      paste0(prefix, forecast.mjd(), "_ssa_spbu_90.txt")
     },
     
     content <- function(file) {
-      file.copy(paste0("rssa/", forecast.mjd(), "_ssa_spbu_90.txt"), file)
+      file.copy(paste0(prefix, "rssa/", forecast.mjd(), "_ssa_spbu_90.txt"), file)
     },
     contentType = "text/plain"
   )
@@ -57,7 +57,7 @@ server <- function(input, output, session) {
   
   get_ssa <- reactive({
     mjd <- get_compare_mjd()
-    ssa.forecast <- tryCatch({read.table(paste0("rssa/", mjd, "_ssa_spbu_365.txt"))},
+    ssa.forecast <- tryCatch({read.table(paste0(prefix, "rssa/", mjd, "_ssa_spbu_365.txt"))},
                        silent = TRUE, condition = function(err) { NA } )
     if(!is.na(ssa.forecast)) {
       colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
@@ -68,7 +68,7 @@ server <- function(input, output, session) {
   # check if these files do exist!
   get_pul_am <- reactive({
     mjd <- get_compare_mjd()
-    am_pul <- tryCatch({read.table(paste0("pul/", mjd - 1, "_am_pul.txt", sep = ""), skip=1)},
+    am_pul <- tryCatch({read.table(paste0(prefix, "pul/", mjd - 1, "_am_pul.txt", sep = ""), skip=1)},
              silent = TRUE, condition = function(err) { NA } )
     if(!is.na(am_pul)) {
       colnames(am_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
@@ -81,7 +81,7 @@ server <- function(input, output, session) {
 
   get_pul_e1 <- reactive({
     mjd <- get_compare_mjd()
-    e1_pul <- tryCatch({read.table(paste0("pul/", mjd - 1, "_e1_pul.txt", sep = ""), skip=1)},
+    e1_pul <- tryCatch({read.table(paste0(prefix, "pul/", mjd - 1, "_e1_pul.txt", sep = ""), skip=1)},
              silent = TRUE, condition = function(err) { NA } )
     if(!is.na(e1_pul)) {
       colnames(e1_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
@@ -98,7 +98,7 @@ server <- function(input, output, session) {
     year <- as.numeric(format(as.Date(date.string), '%Y'))
     volume <- year - 1987
     week <- as.numeric(format(as.Date(date.string), '%V'))
-    filename <- sprintf("ba/bulletina-%s-%03d.txt", tolower(as.roman(volume)), week)
+    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
     ba <- tryCatch({read.csv(filename, sep=";")},
                        silent = TRUE, condition = function(err) { NA } )
     if(!is.na(ba)) {
@@ -134,7 +134,7 @@ server <- function(input, output, session) {
     if(day < 6) {
       week <- week - 1
     }
-    filename <- sprintf("ba/bulletina-%s-%03d.txt", tolower(as.roman(volume)), week)
+    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
     ba <- tryCatch({read.csv(filename, sep=";")},
                    silent = TRUE, condition = function(err) { NA } )
     if(!is.na(ba)) {
@@ -153,7 +153,7 @@ server <- function(input, output, session) {
 
   get_final <- reactive({
     mjd <- get_compare_mjd()
-    c04.file <- "eopc04_IAU2000.62-now.txt"
+    c04.file <- paste0(prefix, "eopc04_IAU2000.62-now.txt")
     c04 <- tryCatch({read.table(c04.file, comment.char = "#", skip = 14)},
                    silent = TRUE, condition = function(err) { NA } )
     if(!is.na(c04)) {
@@ -186,7 +186,7 @@ server <- function(input, output, session) {
           ticks <- start.date + tm
         }
         
-        ssa.forecast <- read.table(paste0("rtoday/ssa_spbu_", days, ".txt"))
+        ssa.forecast <- read.table(paste0(prefix, "rtoday/ssa_spbu_", days, ".txt"))
         colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
         
         ba <- get_a_today()
@@ -202,9 +202,9 @@ server <- function(input, output, session) {
     
     lapply(eop.list, function(eop) {
       output[[paste0(eop, "_dists_", days)]] <- renderUI({
-        L_list <- read.csv(paste0("rtoday/", eop, "_", days, "_L_list.csv"))
+        L_list <- read.csv(paste0(prefix, "rtoday/", eop, "_", days, "_L_list.csv"))
         do.call(tabsetPanel, lapply(L_list$x, function(L) {
-          dists <- read.csv(paste0("rtoday/", eop, "_", days, "_", L, "_dists.csv"))
+          dists <- read.csv(paste0(prefix, "rtoday/", eop, "_", days, "_", L, "_dists.csv"))
           output[[paste0(eop, "_dists_", days, "_", L)]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
                                                                            layout(xaxis=list(title="Number of components")) %>% 
                                                                            layout(yaxis=list(title="MSE", type="log")))
@@ -229,7 +229,7 @@ server <- function(input, output, session) {
     
     lapply(eop.list, function(eop) {
       output[[paste0(eop, "_params_", days)]] <- reactive({
-        params <- read.csv(paste0("rtoday/", days, "params.csv"))
+        params <- read.csv(paste0(prefix, "rtoday/", days, "params.csv"))
         sprintf("L: %d\np: %d", params[[eop]][1], params[[eop]][2])
       })
     })
