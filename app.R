@@ -414,7 +414,7 @@ server <- function(input, output, session) {
       forecast.len <- input$genDays
     }
 
-    rf.x <- rforecast(ssa(x, L = input$L, neig = input$p), groups = list(1:input$p), len = forecast.len, only.new = TRUE)
+    rf.x <- rforecast(ssa(x, L = input$L, neig = input$r), groups = list(1:input$r), len = forecast.len, only.new = TRUE)
     if(input$generateEOP == "LOD") {
       rf.x <- rf.x[-1]
     }
@@ -510,7 +510,7 @@ ui = tagList(
                              "dX" = "dX",
                              "dY" = "dY")),
                numericInput("L", "L: (between 100 and 10000)", min = 100, max = 10000, value = 500),
-               numericInput("p", "p: (between 0 and 100)", min = 0, max = 100, value = 30),
+               numericInput("r", "r: (between 0 and 100)", min = 0, max = 100, value = 30),
                numericInput("genDays", "Days: (between 10 and 3650)", min = 10, max = 3650, value = 365),
                numericInput("genBase", "Base period in years: (between 5 and 20)", min = 5, max = 20, value = 5),
                br(),
