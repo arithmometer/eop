@@ -109,8 +109,8 @@ server <- function(input, output, session) {
       leap <- read.csv("csv/leap_seconds.csv")
       lod <- -diff(ba[, "LOD"])
       for(i in 1:nrow(leap)) {
-        if(as.Date(date.string) <= as.Date(leap$leap.seconds[i]) &&
-           as.Date(date.string) + 365 > as.Date(leap$leap.seconds[i])) {
+        if(as.Date(date.string) >= as.Date(leap$leap.seconds[i]) &&
+           as.Date(date.string) + 365 < as.Date(leap$leap.seconds[i])) {
              j <- as.integer(as.Date(leap$leap.seconds[i]) - as.Date(date.string))
              step <- which(ba[, "MJD"] == mjd) + j - 1
              lod[step] <- lod[step] + 1
@@ -168,7 +168,7 @@ server <- function(input, output, session) {
   
   legend.names <- c("C04", "SSA", "Pul AM", "Pul E1", "Bull A")
   legend.colors <- c("black", "blue", "orange", "green", "purple")
-  
+
   series.list <- c("ssa", "pul_am", "pul_e1", "ba")
   series.names <- c("SSA", "Pul AM", "Pul E1", "Bull A")
   series.getters <- list(get_ssa, get_pul_am, get_pul_e1, get_a)
