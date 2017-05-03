@@ -94,46 +94,13 @@ server <- function(input, output, session) {
   
   get_a <- reactive({
     mjd <- get_compare_mjd()
-    date.string <- mjd_to_date(mjd)
-    year <- as.numeric(format(as.Date(date.string), '%Y'))
+    date <- as.Date(mjd_to_date(mjd))
+    # seek for previous friday
+    weekday <- as.numeric(format(date.string, '%u'))
+    date <- date - (weekday + 2) %% 7
+    week <- as.numeric(format(date, '%V'))
+    year <- as.numeric(format(date, '%Y'))
     volume <- year - 1987
-    week <- as.numeric(format(as.Date(date.string), '%V'))
-    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
-    ba <- tryCatch({read.csv(filename, sep=";")},
-                       silent = TRUE, condition = function(err) { NA } )
-    if(!is.na(ba)) {
-      colnames(ba) <- c("MJD", "Year", "Month", "Day", "Type", "x", "sigma_x", "y", "sigma_y",
-                        "Type.1", "LOD", "sigma_UT1.UTC", "LOD2", "sigma_LOD", "Type.2",
-                        "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
-                        "dY", "sigma_dY")
-      leap <- read.csv("csv/leap_seconds.csv")
-      lod <- -diff(ba[, "LOD"])
-      for(i in 1:nrow(leap)) {
-        if(as.Date(date.string) >= as.Date(leap$leap.seconds[i]) &&
-           as.Date(date.string) + 365 < as.Date(leap$leap.seconds[i])) {
-             j <- as.integer(as.Date(leap$leap.seconds[i]) - as.Date(date.string))
-             step <- which(ba[, "MJD"] == mjd) + j - 1
-             lod[step] <- lod[step] + 1
-           }
-      }
-      ba[, "LOD"] <- c(lod[1], lod)
-      ind <- which(ba[, "MJD"] == mjd)
-      n <- min(nrow(ba), 365)
-      ba <- ba[ind:n, ]
-    }
-    ba
-  })
-  
-  get_a_today <- reactive({
-    mjd <- mjd.today()
-    date.string <- mjd_to_date(mjd)
-    year <- as.numeric(format(as.Date(date.string), '%Y'))
-    volume <- year - 1987
-    week <- as.numeric(format(as.Date(date.string), '%U'))
-    day <- as.numeric(format(as.Date(date.string), '%u'))
-    if(day < 6) {
-      week <- week - 1
-    }
     filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
     ba <- tryCatch({read.csv(filename, sep=";")},
                    silent = TRUE, condition = function(err) { NA } )
@@ -142,11 +109,35 @@ server <- function(input, output, session) {
                         "Type.1", "LOD", "sigma_UT1.UTC", "LOD2", "sigma_LOD", "Type.2",
                         "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
                         "dY", "sigma_dY")
-      lod <- -diff(ba[, "LOD"])
-      ba[, "LOD"] <- c(lod, lod[length(lod)])
       ind <- which(ba[, "MJD"] == mjd)
-      n <- min(nrow(ba), 365)
-      ba <- ba[ind:n, ]
+      ba <- ba[ind:nrow(ba), ]
+      lod <- -diff(ba[, "LOD"])
+      ba[, "LOD"] <- c(lod[1], lod)
+    }
+    ba
+  })
+  
+  get_a_today <- reactive({
+    mjd <- mjd.today()
+    date <- as.Date(mjd_to_date(mjd))
+    # seek for previous friday
+    weekday <- as.numeric(format(date.string, '%u'))
+    date <- date - (weekday + 2) %% 7
+    week <- as.numeric(format(date, '%V'))
+    year <- as.numeric(format(date, '%Y'))
+    volume <- year - 1987
+    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
+    ba <- tryCatch({read.csv(filename, sep=";")},
+                   silent = TRUE, condition = function(err) { NA } )
+    if(!is.na(ba)) {
+      colnames(ba) <- c("MJD", "Year", "Month", "Day", "Type", "x", "sigma_x", "y", "sigma_y",
+                        "Type.1", "LOD", "sigma_UT1.UTC", "LOD2", "sigma_LOD", "Type.2",
+                        "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
+                        "dY", "sigma_dY")
+      ind <- which(ba[, "MJD"] == mjd)
+      ba <- ba[ind:nrow(ba), ]
+      lod <- -diff(ba[, "LOD"])
+      ba[, "LOD"] <- c(lod[1], lod)
     }
     ba
   })
@@ -308,18 +299,18 @@ server <- function(input, output, session) {
         if(series.list[i] == "ba") {
           n <- nrow(series)
           df <- rbind(df, data.frame(
-            x=  MSE(get_final()[(ind):(ind + n - 1), "x"],   series[1:n, "x"], n),
-            y=  MSE(get_final()[(ind):(ind + n - 1), "y"],   series[1:n, "y"], n),
+            x=  MSE(get_final()[(ind):(ind + n - 1), "x"],   series[1:n, "x"],   n),
+            y=  MSE(get_final()[(ind):(ind + n - 1), "y"],   series[1:n, "y"],   n),
             LOD=MSE(get_final()[(ind):(ind + n - 1), "LOD"], series[1:n, "LOD"], n),
             dX= NA,
             dY= NA))
         } else {
           df <- rbind(df, data.frame(
-            x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
-            y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
+            x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"],   365),
+            y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"],   365),
             LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
-            dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
-            dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+            dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"],  365),
+            dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"],  365)))
         }
         rownames(df) <- c(rn, series.names[i])
       }
@@ -334,27 +325,27 @@ server <- function(input, output, session) {
             series <- NA
             break
           }
-          series[, "x"] <- series[, "x"] + series.getters[[i]]()[1:365, "x"]
-          series[, "y"] <- series[, "y"] + series.getters[[i]]()[1:365, "y"]
+          series[, "x"]   <- series[, "x"]   + series.getters[[i]]()[1:365, "x"]
+          series[, "y"]   <- series[, "y"]   + series.getters[[i]]()[1:365, "y"]
           series[, "LOD"] <- series[, "LOD"] + series.getters[[i]]()[1:365, "LOD"]
-          series[, "dX"] <- series[, "dX"] + series.getters[[i]]()[1:365, "dX"]
-          series[, "dY"] <- series[, "dY"] + series.getters[[i]]()[1:365, "dY"]
+          series[, "dX"]  <- series[, "dX"]  + series.getters[[i]]()[1:365, "dX"]
+          series[, "dY"]  <- series[, "dY"]  + series.getters[[i]]()[1:365, "dY"]
           name <- c(name, series.names[i])
         }
       }
       if(!is.na(series)) {
         cn <- length(input$combineSeries)
-        series[, "x"] <- series[, "x"] / cn
-        series[, "y"] <- series[, "y"] / cn
+        series[, "x"]   <- series[, "x"]   / cn
+        series[, "y"]   <- series[, "y"]   / cn
         series[, "LOD"] <- series[, "LOD"] / cn
-        series[, "dX"] <- series[, "dX"] / cn
-        series[, "dY"] <- series[, "dY"] / cn
+        series[, "dX"]  <- series[, "dX"]  / cn
+        series[, "dY"]  <- series[, "dY"]  / cn
         df <- rbind(df, data.frame(
-          x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"], 365),
-          y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"], 365),
+          x=  MSE(get_final()[(ind):(ind + 364), "x"],   series[1:365, "x"],   365),
+          y=  MSE(get_final()[(ind):(ind + 364), "y"],   series[1:365, "y"],   365),
           LOD=MSE(get_final()[(ind):(ind + 364), "LOD"], series[1:365, "LOD"], 365),
-          dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"], 365),
-          dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"], 365)))
+          dX= MSE(get_final()[(ind):(ind + 364), "dX"],  series[1:365, "dX"],  365),
+          dY= MSE(get_final()[(ind):(ind + 364), "dY"],  series[1:365, "dY"],  365)))
         rownames(df) <- c(rn, paste(name, collapse = "+"))
       }
     }
@@ -395,11 +386,11 @@ server <- function(input, output, session) {
     ind.to <- which(finals2000["MJD"] == mjd.to)
 
     gap.df <- data.frame("MJD"=mjd.from:mjd.to,
-                         "x"=finals2000[ind.from:ind.to, "x_pole"],
-                         "y"=finals2000[ind.from:ind.to, "y_pole"],
+                         "x"  =finals2000[ind.from:ind.to, "x_pole"],
+                         "y"  =finals2000[ind.from:ind.to, "y_pole"],
                          "LOD"=finals2000[ind.from:ind.to, "LOD"] / 1000,
-                         "dX"=finals2000[ind.from:ind.to, "dX"] / 1000,
-                         "dY"=finals2000[ind.from:ind.to, "dY"] / 1000)
+                         "dX" =finals2000[ind.from:ind.to, "dX"]  / 1000,
+                         "dY" =finals2000[ind.from:ind.to, "dY"]  / 1000)
 
     c04 <- rbind(c04[, c("MJD", "x", "y", "LOD", "dX", "dY")], gap.df)
 
