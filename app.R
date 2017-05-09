@@ -96,8 +96,9 @@ server <- function(input, output, session) {
     mjd <- get_compare_mjd()
     date <- as.Date(mjd_to_date(mjd))
     # seek for previous friday
-    weekday <- as.numeric(format(date.string, '%u'))
+    weekday <- as.numeric(format(date, '%u'))
     date <- date - (weekday + 2) %% 7
+    
     week <- as.numeric(format(date, '%V'))
     year <- as.numeric(format(date, '%Y'))
     volume <- year - 1987
@@ -121,8 +122,9 @@ server <- function(input, output, session) {
     mjd <- mjd.today()
     date <- as.Date(mjd_to_date(mjd))
     # seek for previous friday
-    weekday <- as.numeric(format(date.string, '%u'))
+    weekday <- as.numeric(format(date, '%u'))
     date <- date - (weekday + 2) %% 7
+    
     week <- as.numeric(format(date, '%V'))
     year <- as.numeric(format(date, '%Y'))
     volume <- year - 1987
@@ -455,7 +457,7 @@ ui = tagList(
   navbarPage(
     theme = shinytheme("spacelab"),
     "SSA EOP Forecast",
-    tabPanel("Forecast for 365 days",
+    tabPanel("Forecast for 365 Days",
              sidebarPanel(
                h4("MJD of today"),
                verbatimTextOutput("mjd"),
@@ -466,31 +468,31 @@ ui = tagList(
                p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
                tags$hr(),
                p("Download forecasts:"),
-               downloadButton("downloadForecast365", label = "Download 365 days"),
+               downloadButton("downloadForecast365", label = "Download"),
                tags$br()
              ),
              mainPanel(
                uiOutput("tabset_eop_365")
              )
     ),
-    tabPanel("Forecast for 90 days",
-             sidebarPanel(
-               # h4("MJD of today"),
-               # verbatimTextOutput("mjd"),
-               # h4("Starting MJD of forecast"),
-               # verbatimTextOutput("forecast.mjd"),
-               checkboxInput("mjd_labels_90", "MJD labels", FALSE),
-               tags$hr(),
-               p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
-               tags$hr(),
-               p("Download forecasts:"),
-               downloadButton("downloadForecast90", label = "Download 90 days"),
-               tags$br()
-             ),
-             mainPanel(
-               uiOutput("tabset_eop_90")
-             )
-    ),
+    # tabPanel("Forecast for 90 days",
+    #          sidebarPanel(
+    #            # h4("MJD of today"),
+    #            # verbatimTextOutput("mjd"),
+    #            # h4("Starting MJD of forecast"),
+    #            # verbatimTextOutput("forecast.mjd"),
+    #            checkboxInput("mjd_labels_90", "MJD labels", FALSE),
+    #            tags$hr(),
+    #            p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
+    #            tags$hr(),
+    #            p("Download forecasts:"),
+    #            downloadButton("downloadForecast90", label = "Download 90 days"),
+    #            tags$br()
+    #          ),
+    #          mainPanel(
+    #            uiOutput("tabset_eop_90")
+    #          )
+    # ),
     tabPanel("Generate Forecast",
              sidebarPanel(
                h4("SSA Forecast Parameters"),
