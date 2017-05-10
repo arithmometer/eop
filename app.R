@@ -262,25 +262,25 @@ server <- function(input, output, session) {
         }
       }
       
-      if(length(input$combineSeries) > 1) {
-        series <- rep(0, 365)
-        name <- c()
-        for(i in 1:(length(series.list)-1)) {
-          if(series.list[i] %in% input$combineSeries) {
-            if(is.na(series.getters[[i]]())) {
-              series <- NA
-              break
-            }
-            series <- series + series.getters[[i]]()[1:365, eop]
-            name <- c(name, series.names[i])
-          }
-        }
-        if(!is.na(series)) {
-          cn <- length(input$combineSeries)
-          series <- series / cn
-          p <- p %>% add_trace(x = ticks[1:length(series)], y = series, name = paste(name, collapse="+"))
-        }
-      }
+      # if(length(input$combineSeries) > 1) {
+      #   series <- rep(0, 365)
+      #   name <- c()
+      #   for(i in 1:(length(series.list)-1)) {
+      #     if(series.list[i] %in% input$combineSeries) {
+      #       if(is.na(series.getters[[i]]())) {
+      #         series <- NA
+      #         break
+      #       }
+      #       series <- series + series.getters[[i]]()[1:365, eop]
+      #       name <- c(name, series.names[i])
+      #     }
+      #   }
+      #   if(!is.na(series)) {
+      #     cn <- length(input$combineSeries)
+      #     series <- series / cn
+      #     p <- p %>% add_trace(x = ticks[1:length(series)], y = series, name = paste(name, collapse="+"))
+      #   }
+      # }
       p
     })
   })
@@ -525,13 +525,13 @@ ui = tagList(
                dateInput("date_compare", label="Choose starting date", value="2015-12-11",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
-               checkboxInput("mjd_compare_labels", "MJD labels", FALSE),
-               tags$hr(),
-               selectizeInput(
-                 "combineSeries", "Series to combine",
-                 choices=list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1", "Bulletin A"="ba"), multiple=TRUE,
-                 selected=list("ssa")
-               )
+               checkboxInput("mjd_compare_labels", "MJD labels", FALSE)
+               # tags$hr(),
+               # selectizeInput(
+               #   "combineSeries", "Series to combine",
+               #   choices=list("SSA"="ssa", "Pulkovo am"="pul_am", "Pulkovo e1"="pul_e1", "Bulletin A"="ba"), multiple=TRUE,
+               #   selected=list("ssa")
+               # )
              ),
              mainPanel(
                h4("MSE"),

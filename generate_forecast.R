@@ -88,7 +88,7 @@ find.Ln <- function(start.forecast, eop, base.len.years, step.len, valid.len.yea
   period <- base.len.years * 365
   
   steps <- valid.len.years * 365 %/% step.len - len %/% step.len + 1
-  start <- fin - steps * step.len + 1
+  start <- fin - (steps - 1) * step.len - len + 1
   if(eop == "LOD") {
     start <- start - 1
   }
@@ -117,7 +117,7 @@ get.forecast <- function(start.forecast, len,
                          base.len.years.xy, base.len.years.lod, base.len.years.dxdy,
                          valid.len.years.xy, valid.len.years.lod, valid.len.years.dxdy,
                          forecast.type, for.today) {
-  dir.create(paste(prefix, forecast.type, "ssa/params/", start.forecast, "/", sep=""), showWarnings = FALSE)
+  dir.create(paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/"), showWarnings = FALSE)
   write.csv(L.xy,   paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/x_",   len, "_L_list.csv"))
   write.csv(L.xy,   paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/y_",   len, "_L_list.csv"))
   write.csv(L.lod,  paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/LOD_", len, "_L_list.csv"))
@@ -139,12 +139,12 @@ get.forecast <- function(start.forecast, len,
   
   fin <- start.forecast - 37664 - 1
   period.xy   <- base.len.years.xy   * 365
-  perid.lod   <- base.len.years.lod  * 365
+  period.lod  <- base.len.years.lod  * 365
   period.dxdy <- base.len.years.dxdy * 365
   
   x   <- c04[(fin - period.xy + 1):fin, "x"]
   y   <- c04[(fin - period.xy + 1):fin, "y"]
-  lod <- c04[(fin - perid.lod):(fin - 1), "LOD"]
+  lod <- c04[(fin - period.lod):(fin - 1), "LOD"]
   dX  <- c04[(fin - period.dxdy + 1):fin, "dX"]
   dY  <- c04[(fin - period.dxdy + 1):fin, "dY"]
   
@@ -160,7 +160,7 @@ get.forecast <- function(start.forecast, len,
                        dX =c(p.dx[[1]],  p.dx[[2]]),
                        dY =c(p.dy[[1]],  p.dy[[2]])
   )
-  write.csv(params, paste0(prefix, forecast.type, "ssa/params/", start.forecast, "_params.csv"))
+  write.csv(params, paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/", len, "_params.csv"))
   
   df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = f.x, y = f.y, LOD = f.lod[-1], dX = f.dx, dY = f.dy)
   
