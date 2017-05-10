@@ -46,7 +46,7 @@ MSE <- function(a, b, n) {
   sum((a - b)**2) / n
 }
 
-find.r <- function(start.forecast, eop, start, period, steps, step.len, L, n, len, forecast.type) {
+find.r <- function(start.forecast, eop, start, period, steps, step.len, L, n, len, forecast.type, for.today) {
   s <- c()
   for(i in 0:(steps - 1)) {
     l <- start + i * step.len - period
@@ -81,7 +81,7 @@ find.r <- function(start.forecast, eop, start, period, steps, step.len, L, n, le
   return(list(which.min(dists), min(dists)))
 }
 
-find.Ln <- function(start.forecast, eop, base.len.years, step.len, valid.len.years, L.list, pn, len, forecast.type) {
+find.Ln <- function(start.forecast, eop, base.len.years, step.len, valid.len.years, L.list, pn, len, forecast.type, for.today) {
   ind <- start.forecast - 37664
   fin <- ind - 1
   
@@ -100,7 +100,7 @@ find.Ln <- function(start.forecast, eop, base.len.years, step.len, valid.len.yea
     if(L >= period - 50) {
       break
     }
-    res <- find.r(start.forecast, eop, start, period, steps, step.len, L, pn, len, forecast.type)
+    res <- find.r(start.forecast, eop, start, period, steps, step.len, L, pn, len, forecast.type, for.today)
     if(res[[2]] < mindist) {
       mindist <- res[[2]]
       best.r <- res[[1]]
@@ -131,11 +131,11 @@ get.forecast <- function(start.forecast, len,
     write.csv(L.dxdy, paste0(prefix, forecast.type, "today/dY_",  len, "_L_list.csv"))
   }
 
-  p.x   <- find.Ln(start.forecast, "x",   base.len.years.xy,   step.len.xy,   valid.len.years.xy,   L.xy,   n.xy,   len, forecast.type)
-  p.y   <- find.Ln(start.forecast, "y",   base.len.years.xy,   step.len.xy,   valid.len.years.xy,   L.xy,   n.xy,   len, forecast.type)
-  p.lod <- find.Ln(start.forecast, "LOD", base.len.years.lod,  step.len.lod,  valid.len.years.lod,  L.lod,  n.lod,  len, forecast.type)
-  p.dx  <- find.Ln(start.forecast, "dX",  base.len.years.dxdy, step.len.dxdy, valid.len.years.dxdy, L.dxdy, n.dxdy, len, forecast.type)
-  p.dy  <- find.Ln(start.forecast, "dY",  base.len.years.dxdy, step.len.dxdy, valid.len.years.dxdy, L.dxdy, n.dxdy, len, forecast.type)
+  p.x   <- find.Ln(start.forecast, "x",   base.len.years.xy,   step.len.xy,   valid.len.years.xy,   L.xy,   n.xy,   len, forecast.type, for.today)
+  p.y   <- find.Ln(start.forecast, "y",   base.len.years.xy,   step.len.xy,   valid.len.years.xy,   L.xy,   n.xy,   len, forecast.type, for.today)
+  p.lod <- find.Ln(start.forecast, "LOD", base.len.years.lod,  step.len.lod,  valid.len.years.lod,  L.lod,  n.lod,  len, forecast.type, for.today)
+  p.dx  <- find.Ln(start.forecast, "dX",  base.len.years.dxdy, step.len.dxdy, valid.len.years.dxdy, L.dxdy, n.dxdy, len, forecast.type, for.today)
+  p.dy  <- find.Ln(start.forecast, "dY",  base.len.years.dxdy, step.len.dxdy, valid.len.years.dxdy, L.dxdy, n.dxdy, len, forecast.type, for.today)
   
   fin <- start.forecast - 37664 - 1
   period.xy   <- base.len.years.xy   * 365
