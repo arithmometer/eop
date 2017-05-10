@@ -4,8 +4,8 @@ library(shinythemes)
 library(Rssa)
 
 server <- function(input, output, session) {
-  prefix <- "/srv/shiny-server/eop/"
-  # prefix <- "/home/grigory/data/R/eop/"
+  # prefix <- "/srv/shiny-server/eop/"
+  prefix <- "/home/grigory/data/R/eop/"
   
   mjd.today <- reactive({
     date.string <- format(Sys.time(), "%Y-%m-%d")
@@ -157,7 +157,7 @@ server <- function(input, output, session) {
   })
   
   eop.list <- list("x", "y", "LOD", "dX", "dY")
-  days.len <- list(365, 90)
+  days.len <- list(365)
   
   legend.names <- c("C04", "SSA", "Pul AM", "Pul E1", "Bull A")
   legend.colors <- c("black", "blue", "orange", "green", "purple")
@@ -226,6 +226,18 @@ server <- function(input, output, session) {
         sprintf("L: %d\np: %d", params[[eop]][1], params[[eop]][2])
       })
     })
+  })
+  
+  output[["help_dists"]] <- renderUI({
+    days <- 365
+    L_list <- read.csv(paste0(prefix, "rtoday/", input$generateEOP, "_", days, "_L_list.csv"))
+    do.call(tabsetPanel, lapply(L_list$x, function(L) {
+      dists <- read.csv(paste0(prefix, "rtoday/", input$generateEOP, "_", days, "_", L, "_dists.csv"))
+      output[[paste0(input$generateEOP, "_help_dists_", days, "_", L)]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
+                                                                       layout(xaxis=list(title="Number of components")) %>% 
+                                                                       layout(yaxis=list(title="MSE", type="log")))
+      tabPanel(paste0("L = ", L), plotlyOutput(paste0(input$generateEOP, "_help_dists_", days, "_", L)))
+    }))
   })
   
   lapply(eop.list, function(eop) {
@@ -514,6 +526,7 @@ ui = tagList(
                conditionalPanel(condition = "output.showDownloadButton", downloadButton("downloadGeneratedForecast", label = "Download forecast"))
              ),
              mainPanel(
+               uiOutput("help_dists"),
                h4("Generated Forecast"),
                plotlyOutput("plot_generated")
              )
