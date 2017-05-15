@@ -176,7 +176,7 @@ get.forecast <- function(start.forecast, len,
   
   if(for.today) {
     output.file.name.today <- paste0(prefix, "rtoday/ssa_spbu_", len, ".txt")
-    my.write(format(rdf, scientific = FALSE), file = output.file.name.today,
+    my.write(format(df, scientific = FALSE), file = output.file.name.today,
              header = "# MJD\t\t\tx\t\t\ty\t\t\tLOD\t\t\tdX\t\t\tdY",
              row.names=FALSE, col.names = FALSE, sep = "\t", quote = FALSE)
   }
