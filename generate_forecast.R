@@ -46,10 +46,10 @@ MSE <- function(a, b, n) {
   sum((a - b)**2) / n
 }
 
-find.r <- function(start.forecast, eop, start, period, steps, step.len, L, n, len, forecast.type, for.today) {
+find.r <- function(eop, start, base.len, n.steps, step.len, L, n, len, forecast.type, for.today) {
   s <- c()
-  for(i in 0:(steps - 1)) {
-    l <- start + i * step.len - period
+  for(i in 0:(n.steps - 1)) {
+    l <- start + i * step.len - base.len
     r <- start + i * step.len - 1
     s[[i + 1]] <- ssa(c04[l:r, eop], L = L, neig = n)
   }
@@ -57,7 +57,7 @@ find.r <- function(start.forecast, eop, start, period, steps, step.len, L, n, le
   dists <- c()
   for(num in 1:n) {
     r <- c()
-    for(i in 0:(steps - 1)) {
+    for(i in 0:(n.steps - 1)) {
       f <- switch(forecast.type,
                   "r" = rforecast(s[[i + 1]], groups = list(1:num), len = len, only.new = TRUE),
                   "v" = vforecast(s[[i + 1]], groups = list(1:num), len = len, only.new = TRUE)
@@ -81,14 +81,14 @@ find.r <- function(start.forecast, eop, start, period, steps, step.len, L, n, le
   return(list(which.min(dists), min(dists)))
 }
 
-find.Ln <- function(start.forecast, eop, base.len.years, step.len, valid.len.years, L.list, pn, len, forecast.type, for.today) {
+find.Ln <- function(start.forecast, eop, base.len.years, valid.len.years, n.steps, L.list, pn, len, forecast.type, for.today) {
   ind <- start.forecast - 37664
-  fin <- ind - 1
   
-  period <- base.len.years * 365
+  base.len <- base.len.years * 365
+  valid.len <- valid.len.years * 365
+  step.len <- (valid.len - len) %/% (n.steps - 1)
+  start <- ind - (n.steps - 1) * step.len - len
   
-  steps <- valid.len.years * 365 %/% step.len - len %/% step.len + 1
-  start <- fin - (steps - 1) * step.len - len + 1
   if(eop == "LOD") {
     start <- start - 1
   }
@@ -97,10 +97,10 @@ find.Ln <- function(start.forecast, eop, base.len.years, step.len, valid.len.yea
   best.r <- 1
   mindist <- Inf
   for(L in L.list) {
-    if(L >= period - 50) {
+    if(L >= base.len - 50) {
       break
     }
-    res <- find.r(start.forecast, eop, start, period, steps, step.len, L, pn, len, forecast.type, for.today)
+    res <- find.r(eop, start, base.len, n.steps, step.len, L, pn, len, forecast.type, for.today)
     if(res[[2]] < mindist) {
       mindist <- res[[2]]
       best.r <- res[[1]]
@@ -111,49 +111,53 @@ find.Ln <- function(start.forecast, eop, base.len.years, step.len, valid.len.yea
 }
 
 get.forecast <- function(start.forecast, len,
-                         L.xy, L.lod, L.dxdy, 
-                         n.xy, n.lod, n.dxdy,
-                         step.len.xy, step.len.lod, step.len.dxdy,
-                         base.len.years.xy, base.len.years.lod, base.len.years.dxdy,
-                         valid.len.years.xy, valid.len.years.lod, valid.len.years.dxdy,
-                         forecast.type, for.today) {
-  dir.create(paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/"), showWarnings = FALSE)
-  write.csv(L.xy,   paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/x_",   len, "_L_list.csv"))
-  write.csv(L.xy,   paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/y_",   len, "_L_list.csv"))
-  write.csv(L.lod,  paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/LOD_", len, "_L_list.csv"))
-  write.csv(L.dxdy, paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/dX_",  len, "_L_list.csv"))
-  write.csv(L.dxdy, paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/dY_",  len, "_L_list.csv"))
-  if(for.today) {
-    write.csv(L.xy,   paste0(prefix, forecast.type, "today/x_",   len, "_L_list.csv"))
-    write.csv(L.xy,   paste0(prefix, forecast.type, "today/y_",   len, "_L_list.csv"))
-    write.csv(L.lod,  paste0(prefix, forecast.type, "today/LOD_", len, "_L_list.csv"))
-    write.csv(L.dxdy, paste0(prefix, forecast.type, "today/dX_",  len, "_L_list.csv"))
-    write.csv(L.dxdy, paste0(prefix, forecast.type, "today/dY_",  len, "_L_list.csv"))
-  }
+                       L.x, L.y, L.lod, L.dx, L.dy,
+                       n.x, n.y, n.lod, n.dx, n.dy,
+                       base.len.years.x, base.len.years.y, base.len.years.lod, base.len.years.dx, base.len.years.dy,
+                       valid.len.years.x, valid.len.years.y, valid.len.years.lod, valid.len.years.dx, valid.len.years.dy,
+                       n.steps.x, n.steps.y, n.steps.lod, n.steps.dx, n.steps.dy,
+                       forecast.type, for.today) {
 
-  p.x   <- find.Ln(start.forecast, "x",   base.len.years.xy,   step.len.xy,   valid.len.years.xy,   L.xy,   n.xy,   len, forecast.type, for.today)
-  p.y   <- find.Ln(start.forecast, "y",   base.len.years.xy,   step.len.xy,   valid.len.years.xy,   L.xy,   n.xy,   len, forecast.type, for.today)
-  p.lod <- find.Ln(start.forecast, "LOD", base.len.years.lod,  step.len.lod,  valid.len.years.lod,  L.lod,  n.lod,  len, forecast.type, for.today)
-  p.dx  <- find.Ln(start.forecast, "dX",  base.len.years.dxdy, step.len.dxdy, valid.len.years.dxdy, L.dxdy, n.dxdy, len, forecast.type, for.today)
-  p.dy  <- find.Ln(start.forecast, "dY",  base.len.years.dxdy, step.len.dxdy, valid.len.years.dxdy, L.dxdy, n.dxdy, len, forecast.type, for.today)
+  dir.create(paste0(prefix, forecast.type, "ssa/params/", start.forecast), showWarnings = FALSE, recursive = TRUE)
+
+  write.csv(L.x,   paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/x_",   len, "_L_list.csv"))
+  write.csv(L.y,   paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/y_",   len, "_L_list.csv"))
+  write.csv(L.lod, paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/LOD_", len, "_L_list.csv"))
+  write.csv(L.dx,  paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/dX_",  len, "_L_list.csv"))
+  write.csv(L.dy,  paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/dY_",  len, "_L_list.csv"))
+  if(for.today) {
+    write.csv(L.x,   paste0(prefix, forecast.type, "today/x_",   len, "_L_list.csv"))
+    write.csv(L.y,   paste0(prefix, forecast.type, "today/y_",   len, "_L_list.csv"))
+    write.csv(L.lod, paste0(prefix, forecast.type, "today/LOD_", len, "_L_list.csv"))
+    write.csv(L.dx,  paste0(prefix, forecast.type, "today/dX_",  len, "_L_list.csv"))
+    write.csv(L.dy,  paste0(prefix, forecast.type, "today/dY_",  len, "_L_list.csv"))
+  }
+ 
+  p.x   <- find.Ln(start.forecast, "x",   base.len.years.x,   valid.len.years.x,   n.steps.x,   L.x,   n.x,   len, forecast.type, for.today)
+  p.y   <- find.Ln(start.forecast, "y",   base.len.years.y,   valid.len.years.y,   n.steps.y,   L.y,   n.y,   len, forecast.type, for.today)
+  p.lod <- find.Ln(start.forecast, "LOD", base.len.years.lod, valid.len.years.lod, n.steps.lod, L.lod, n.lod, len, forecast.type, for.today)
+  p.dx  <- find.Ln(start.forecast, "dX",  base.len.years.dx,  valid.len.years.dx,  n.steps.dx,  L.dx,  n.dx,  len, forecast.type, for.today)
+  p.dy  <- find.Ln(start.forecast, "dY",  base.len.years.dy,  valid.len.years.dy,  n.steps.dy,  L.dy,  n.dy,  len, forecast.type, for.today)
   
   fin <- start.forecast - 37664 - 1
-  period.xy   <- base.len.years.xy   * 365
-  period.lod  <- base.len.years.lod  * 365
-  period.dxdy <- base.len.years.dxdy * 365
-  
-  x   <- c04[(fin - period.xy + 1):fin, "x"]
-  y   <- c04[(fin - period.xy + 1):fin, "y"]
+  period.x   <- base.len.years.x   * 365
+  period.y   <- base.len.years.y   * 365
+  period.lod <- base.len.years.lod * 365
+  period.dx  <- base.len.years.dx  * 365
+  period.dy  <- base.len.years.dy  * 365
+
+  x   <- c04[(fin - period.x + 1):fin, "x"]
+  y   <- c04[(fin - period.y + 1):fin, "y"]
   lod <- c04[(fin - period.lod):(fin - 1), "LOD"]
-  dX  <- c04[(fin - period.dxdy + 1):fin, "dX"]
-  dY  <- c04[(fin - period.dxdy + 1):fin, "dY"]
-  
+  dX  <- c04[(fin - period.dx + 1):fin, "dX"]
+  dY  <- c04[(fin - period.dy + 1):fin, "dY"]
+
   f.x   <- rforecast(ssa(x,   L = p.x[[1]],   neig = p.x[[2]]),   groups = list(1:p.x[[2]]),   len = len,     only.new = TRUE)
   f.y   <- rforecast(ssa(y,   L = p.y[[1]],   neig = p.y[[2]]),   groups = list(1:p.y[[2]]),   len = len,     only.new = TRUE)
   f.lod <- rforecast(ssa(lod, L = p.lod[[1]], neig = p.lod[[2]]), groups = list(1:p.lod[[2]]), len = len + 1, only.new = TRUE)
   f.dx  <- rforecast(ssa(dX,  L = p.dx[[1]],  neig = p.dx[[2]]),  groups = list(1:p.dx[[2]]),  len = len,     only.new = TRUE)
   f.dy  <- rforecast(ssa(dY,  L = p.dy[[1]],  neig = p.dy[[2]]),  groups = list(1:p.dy[[2]]),  len = len,     only.new = TRUE)
-  
+
   params <- data.frame(x  =c(p.x[[1]],   p.x[[2]]),
                        y  =c(p.y[[1]],   p.y[[2]]),
                        LOD=c(p.lod[[1]], p.lod[[2]]),
@@ -178,25 +182,28 @@ get.forecast <- function(start.forecast, len,
   }
 }
 
-if(!mjd.given) {
+last.mjd.c04 <- c04[nrow(c04), "MJD"]
+
+if(start.forecast > last.mjd.c04) {
   finals2000 <- read.csv(paste(prefix, "csv/", start.forecast - 1, "/finals2000A.daily.csv", sep=""), sep=";")
   
-  last.mjd.c04 <- c04[nrow(c04), "MJD"]
   mjd.from <- last.mjd.c04 + 1
-  mjd.to <- start.forecast - 1
+  mjd.to   <- start.forecast - 1
   ind.from <- which(finals2000["MJD"] == mjd.from)
-  ind.to <- which(finals2000["MJD"] == mjd.to)
+  ind.to   <- which(finals2000["MJD"] == mjd.to)
   
   gap.df <- data.frame("MJD"=mjd.from:mjd.to,
-                       "x"=finals2000[ind.from:ind.to, "x_pole"],
-                       "y"=finals2000[ind.from:ind.to, "y_pole"],
+                       "x"  =finals2000[ind.from:ind.to, "x_pole"],
+                       "y"  =finals2000[ind.from:ind.to, "y_pole"],
                        "LOD"=finals2000[ind.from:ind.to, "LOD"] / 1000,
-                       "dX"=finals2000[ind.from:ind.to, "dX"] / 1000,
-                       "dY"=finals2000[ind.from:ind.to, "dY"] / 1000)
+                       "dX" =finals2000[ind.from:ind.to, "dX"] / 1000,
+                       "dY" =finals2000[ind.from:ind.to, "dY"] / 1000)
   
   c04 <- rbind(c04[, c("MJD", "x", "y", "LOD", "dX", "dY")], gap.df)
-  
-  write.csv(data.frame(start.forecast=start.forecast), paste(prefix, "rtoday/start_forecast.csv", sep=""))
+}
+
+if(!mjd.given) {
+  write.csv(data.frame(start.forecast=start.forecast), paste0(prefix, "rtoday/start_forecast.csv"))
 }
 
 L.xy   <- c( 300,  500,  700,  900, 1100, 1300, 1500, 1700, 1900, 2100)
@@ -204,9 +211,9 @@ L.lod  <- c( 300,  600,  900, 1200, 1500, 1800, 2100, 2400, 2700, 3000)
 L.dxdy <- c( 250,  300,  350,  400,  450,  500)
 
 get.forecast(start.forecast, 365,
-             L.xy=L.xy, L.lod=L.lod, L.dxdy=L.dxdy,
-             n.xy=30, n.lod=30, n.dxdy=5, 
-             step.len.xy=365, step.len.lod=182, step.len.dxdy=112,
-             base.len.years.xy=20, base.len.years.lod=10, base.len.years.dxdy=20,
-             valid.len.years.xy=15, valid.len.years.lod=5, valid.len.years.dxdy=3,
+             L.x=L.xy, L.y=L.xy, L.lod=L.lod, L.dx=L.dxdy, L.dy=L.dxdy,
+             n.x=30, n.y=30, n.lod=30, n.dx=5, n.dy=5,
+             base.len.years.x=15, base.len.years.y=15, base.len.years.lod=15, base.len.years.dx=15, base.len.years.dy=15,
+             valid.len.years.x=7, valid.len.years.y=7, valid.len.years.lod=10, valid.len.years.dx=7, valid.len.years.dy=7,
+             n.steps.x=10, n.steps.y=10, n.steps.lod=10, n.steps.dx=10, n.steps.dy=10,
              forecast.type="r", for.today=!mjd.given)
