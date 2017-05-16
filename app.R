@@ -30,7 +30,7 @@ server <- function(input, output, session) {
   
   output$downloadForecast365 <- downloadHandler(
     filename <- function() {
-      paste0(prefix, forecast.mjd(), "_ssa_spbu_365.txt")
+      paste0(forecast.mjd(), "_ssa_spbu_365.txt")
     },
     
     content <- function(file) {
@@ -39,9 +39,20 @@ server <- function(input, output, session) {
     contentType = "text/plain"
   )
   
+  output$downloadForecast365atDate <- downloadHandler(
+    filename <- function() {
+      paste0(get_compare_mjd(), "_ssa_spbu_365.txt")
+    },
+    
+    content <- function(file) {
+      file.copy(paste0(prefix, "rssa/", get_compare_mjd(), "_ssa_spbu_365.txt"), file)
+    },
+    contentType = "text/plain"
+  )
+  
   output$downloadForecast90 <- downloadHandler(
     filename <- function() {
-      paste0(prefix, forecast.mjd(), "_ssa_spbu_90.txt")
+      paste0(forecast.mjd(), "_ssa_spbu_90.txt")
     },
     
     content <- function(file) {
@@ -480,7 +491,7 @@ ui = tagList(
                p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
                tags$hr(),
                p("Download forecasts:"),
-               downloadButton("downloadForecast365", label = "Download"),
+               downloadButton("downloadForecast365", label = "Download", class="btn-success"),
                tags$br()
              ),
              mainPanel(
@@ -523,7 +534,9 @@ ui = tagList(
                tags$hr(),
                actionButton("generateForecast", "Generate"),
                br(),
-               conditionalPanel(condition = "output.showDownloadButton", downloadButton("downloadGeneratedForecast", label = "Download forecast"))
+               conditionalPanel(condition = "output.showDownloadButton",
+                                downloadButton("downloadGeneratedForecast",
+                                               label = "Download forecast", class="btn-success"))
              ),
              mainPanel(
                uiOutput("help_dists"),
@@ -538,7 +551,8 @@ ui = tagList(
                dateInput("date_compare", label="Choose starting date", value="2015-12-11",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
-               checkboxInput("mjd_compare_labels", "MJD labels", FALSE)
+               checkboxInput("mjd_compare_labels", "MJD labels", FALSE),
+               downloadButton("downloadForecast365atDate", label = "Download", class="btn-success")
                # tags$hr(),
                # selectizeInput(
                #   "combineSeries", "Series to combine",
