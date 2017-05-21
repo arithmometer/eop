@@ -378,7 +378,8 @@ server <- function(input, output, session) {
                   options=list(pageLength=10,
                                searching=FALSE,
                                paging = FALSE
-                  ))
+                  )) %>% DT::formatRound(columns=c("x", "y", "LOD", "dX", "dY"), digits=12)
+
   }, include.rownames=TRUE, digits=10)
   
   values <- reactiveValues()
@@ -546,9 +547,9 @@ ui = tagList(
     ),
     tabPanel("Compare Forecasts",
              sidebarPanel(
-               p("Date input is limited between 27.08.2010 and 1.03.2016"),
+               p("Choose date after 01.01.2010"),
                tags$hr(),
-               dateInput("date_compare", label="Choose starting date", value="2015-12-11",
+               dateInput("date_compare", label="Choose starting date", value="2015-01-01", min="2010-01-01",
                          format="dd.mm.yyyy", startview="day", weekstart=1),
                tags$hr(),
                checkboxInput("mjd_compare_labels", "MJD labels", FALSE),
