@@ -16,12 +16,20 @@ server <- function(input, output, session) {
     mjd.today()
   })
   
+  output$date <- reactive({
+    mjd_to_date(mjd.today())
+  })
+  
   forecast.mjd <- reactive({
     read.csv(paste0(prefix, "rtoday/start_forecast.csv"))$start.forecast
   })
   
   output$forecast.mjd <- reactive({
     forecast.mjd()
+  })
+  
+  output$forecast.date <- reactive({
+    mjd_to_date(forecast.mjd())
   })
   
   mjd_to_date <- function(mjd) {
@@ -170,12 +178,12 @@ server <- function(input, output, session) {
   eop.list <- list("x", "y", "LOD", "dX", "dY")
   days.len <- list(365)
   
-  legend.names <- c("C04", "SSA", "Pul AM", "Pul E1", "Bull A")
-  legend.colors <- c("black", "blue", "orange", "green", "purple")
+  legend.names <- c("C04", "SSA", "Pul AM", "Bull A")
+  legend.colors <- c("black", "blue", "orange", "purple")
 
-  series.list <- c("ssa", "pul_am", "pul_e1", "ba")
-  series.names <- c("SSA", "Pul AM", "Pul E1", "Bull A")
-  series.getters <- list(get_ssa, get_pul_am, get_pul_e1, get_a)
+  series.list <- c("ssa", "pul_am", "ba")
+  series.names <- c("SSA", "Pul AM", "Bull A")
+  series.getters <- list(get_ssa, get_pul_am, get_a)
   
   lapply(days.len, function(days) {
     lapply(eop.list, function(eop) {
@@ -485,8 +493,10 @@ ui = tagList(
              sidebarPanel(
                h4("MJD of today"),
                verbatimTextOutput("mjd"),
+               verbatimTextOutput("date"),
                h4("Starting MJD of forecast"),
                verbatimTextOutput("forecast.mjd"),
+               verbatimTextOutput("forecast.date"),
                checkboxInput("mjd_labels_365", "MJD labels", FALSE),
                tags$hr(),
                p(a(href = "http://tycho.usno.navy.mil/mjd.html", "What is MJD")),
@@ -527,9 +537,13 @@ ui = tagList(
                              "dX" = "dX",
                              "dY" = "dY")),
                numericInput("L", "L: (between 100 and 10000)", min = 100, max = 10000, value = 500),
+               helpText("Parameter L, window length (or length of time series lag) for decomposition."),
                numericInput("r", "r: (between 0 and 100)", min = 0, max = 100, value = 30),
+               helpText("Number of first eigen components to use for decomposition and forecasting."),
                numericInput("genDays", "Days: (between 10 and 3650)", min = 10, max = 3650, value = 365),
+               helpText("Length of forecast being generated."),
                numericInput("genBase", "Base period in years: (between 5 and 20)", min = 5, max = 20, value = 5),
+               helpText("Base period is a period of time preceding to the forecast which, based on which the forecast will be generated."),
                br(),
                checkboxInput("mjd_labels_generated", "MJD labels", FALSE),
                tags$hr(),
@@ -540,7 +554,7 @@ ui = tagList(
                                                label = "Download forecast", class="btn-success"))
              ),
              mainPanel(
-               uiOutput("help_dists"),
+               # uiOutput("help_dists"),
                h4("Generated Forecast"),
                plotlyOutput("plot_generated")
              )
@@ -579,16 +593,26 @@ ui = tagList(
     ),
     tabPanel("About",
              mainPanel(
+               tags$p("This site was created as a part of ", a("Graduation Project (in Russian, 2017)", href="thesis.pdf"), 
+               " of Grigorii Okhotnikov, Master student of Saint Petersburg State University."),
+               p("Scientific supervisor: Associate Professor Nina Golyandina, PhD, SPbU."),
+               h4("Sources of forecasts for comparison:"),
+               tags$ol(
+                 tags$li(a(href="https://www.iers.org/IERS/EN/Publications/Bulletins/bulletins.html", "IERS Bulletin A")),
+                 tags$li(a(href="http://www.gao.spb.ru/english/as/persac/", "Pulkovo Observatory, Saint Petersburg"))
+               ),
                h4("Relevant Sources:"),
                tags$ol(
-                 tags$li(a(href = "http://www.gistatgroup.com/cat/", "Caterpillar-SSA")), 
-                 tags$li(a(href = "https://github.com/asl/rssa", "Rssa GitHub repository")),
+                 tags$li(a(href = "https://www.crcpress.com/Analysis-of-Time-Series-Structure-SSA-and-Related-Techniques/Golyandina-Nekrutkin-Zhigljavsky/p/book/9781584881940",
+                           "Analysis of Time Series Structure: SSA and Related Techniques - Nina Golyandina, Vladimir Nekrutkin, Anatoly Zhigljavsky")),
+                 tags$li(a(href = "http://www.gistatgroup.com/cat/", "Caterpillar-SSA website")), 
+                 tags$li(a(href = "https://github.com/asl/rssa", "Rssa package GitHub repository")),
                  tags$li(a(href = "https://hpiers.obspm.fr/iers/eop/eopc04/C04.guide.pdf", 
                            "Earth Orientation Parameters C04 Guide"))
                ),
                tags$hr(),
-               p("By arithmometer"),
-               a("GitHub", href="http://www.github.com/arithmometer/eop")
+               p("View the source code on ", a("GitHub.", href="http://www.github.com/arithmometer/eop")),
+               p("By arithmometer. Powered by", a("R Shiny.", href="https://shiny.rstudio.com/"))
              )
     )
   )
