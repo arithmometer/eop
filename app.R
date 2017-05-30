@@ -47,6 +47,15 @@ server <- function(input, output, session) {
     contentType = "text/plain"
   )
   
+  output$help <- downloadHandler(
+    filename <- function() {
+      "help.pdf"
+    },
+    content <- function(file) {
+      file.copy("www/help.pdf", file)
+    }
+  )
+  
   output$downloadForecast365atDate <- downloadHandler(
     filename <- function() {
       paste0(get_compare_mjd(), "_ssa_spbu_365.txt")
@@ -491,6 +500,7 @@ ui = tagList(
     "SSA EOP Forecast",
     tabPanel("Forecast for 365 Days",
              sidebarPanel(
+               downloadButton("help", label = "User's manual", class="btn-info"),
                h4("MJD of today"),
                verbatimTextOutput("mjd"),
                verbatimTextOutput("date"),
@@ -594,7 +604,7 @@ ui = tagList(
     tabPanel("About",
              mainPanel(
                tags$p("This site was created as a part of ", a("Graduation Project (in Russian, 2017)", href="thesis.pdf"), 
-               " of Grigorii Okhotnikov, Master student of Saint Petersburg State University."),
+               " of Grigory Okhotnikov, Master student of Saint Petersburg State University."),
                p("Scientific supervisor: Associate Professor Nina Golyandina, PhD, SPbU."),
                h4("Sources of forecasts for comparison:"),
                tags$ol(
