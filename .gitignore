@@ -19,3 +19,13 @@ vssa/
 vtoday/
 test_generate_forecast.R
 
+help.pdf
+
+# LaTeX
+*.aux
+*.gz
+*.log
+*.nav
+*.out
+*.snm
+*.toc
