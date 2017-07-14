@@ -2,6 +2,8 @@
 library(methods)
 suppressMessages(library(Rssa))
 
+LOD.lag <- 2
+
 mjd.given <- FALSE
 args = commandArgs(trailingOnly=TRUE)
 if(length(args) > 0) {
@@ -90,7 +92,7 @@ find.Ln <- function(start.forecast, eop, base.len.years, valid.len.years, n.step
   start <- ind - (n.steps - 1) * step.len - len
   
   if(eop == "LOD") {
-    start <- start - 1
+    start <- start - LOD.lag
   }
   
   best.L <- L.list[1]
@@ -148,13 +150,13 @@ get.forecast <- function(start.forecast, len,
 
   x   <- c04[(fin - period.x + 1):fin, "x"]
   y   <- c04[(fin - period.y + 1):fin, "y"]
-  lod <- c04[(fin - period.lod):(fin - 1), "LOD"]
+  lod <- c04[(fin - period.lod):(fin - LOD.lag), "LOD"]
   dX  <- c04[(fin - period.dx + 1):fin, "dX"]
   dY  <- c04[(fin - period.dy + 1):fin, "dY"]
 
   f.x   <- rforecast(ssa(x,   L = p.x[[1]],   neig = p.x[[2]]),   groups = list(1:p.x[[2]]),   len = len,     only.new = TRUE)
   f.y   <- rforecast(ssa(y,   L = p.y[[1]],   neig = p.y[[2]]),   groups = list(1:p.y[[2]]),   len = len,     only.new = TRUE)
-  f.lod <- rforecast(ssa(lod, L = p.lod[[1]], neig = p.lod[[2]]), groups = list(1:p.lod[[2]]), len = len + 1, only.new = TRUE)
+  f.lod <- rforecast(ssa(lod, L = p.lod[[1]], neig = p.lod[[2]]), groups = list(1:p.lod[[2]]), len = len + LOD.lag, only.new = TRUE)
   f.dx  <- rforecast(ssa(dX,  L = p.dx[[1]],  neig = p.dx[[2]]),  groups = list(1:p.dx[[2]]),  len = len,     only.new = TRUE)
   f.dy  <- rforecast(ssa(dY,  L = p.dy[[1]],  neig = p.dy[[2]]),  groups = list(1:p.dy[[2]]),  len = len,     only.new = TRUE)
 
@@ -166,7 +168,7 @@ get.forecast <- function(start.forecast, len,
   )
   write.csv(params, paste0(prefix, forecast.type, "ssa/params/", start.forecast, "/", len, "_params.csv"))
   
-  df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = f.x, y = f.y, LOD = f.lod[-1], dX = f.dx, dY = f.dy)
+  df <- data.frame(MJD = start.forecast:(start.forecast + len - 1), x = f.x, y = f.y, LOD = f.lod[-c(1:LOD.lag)], dX = f.dx, dY = f.dy)
   
   output.file.name <- paste0(prefix, "rssa/", start.forecast, "_ssa_spbu_", len, ".txt")
   
