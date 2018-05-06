@@ -5,48 +5,51 @@ library(Rssa)
 
 server <- function(input, output, session) {
   prefix <- "/srv/shiny-server/eop/"
-  # prefix <- "/home/grigory/data/R/eop/"
-  
-  mjd.today <- reactive({
-    date.string <- format(Sys.time(), "%Y-%m-%d")
+  # prefix <- "/home/grigory/data/R/eop/shiny-server/eop/"
+
+  date_to_mjd <- function(date.string) {
     as.integer(as.Date(date.string) - as.Date("1858-11-17") - 1)
-  })
-  
-  output$mjd <- reactive({
-    mjd.today()
-  })
-  
-  output$date <- reactive({
-    mjd_to_date(mjd.today())
-  })
-  
-  forecast.mjd <- reactive({
-    read.csv(paste0(prefix, "rtoday/start_forecast.csv"))$start.forecast
-  })
-  
-  output$forecast.mjd <- reactive({
-    forecast.mjd()
-  })
-  
-  output$forecast.date <- reactive({
-    mjd_to_date(forecast.mjd())
-  })
-  
+  }
+
   mjd_to_date <- function(mjd) {
     as.Date("1858-11-17") + mjd
   }
-  
+
+  mjd.today <- reactive({
+    date_to_mjd(format(Sys.time(), "%Y-%m-%d"))
+  })
+
+  output$mjd <- reactive({
+    mjd.today()
+  })
+
+  output$date <- reactive({
+    mjd_to_date(mjd.today())
+  })
+
+  forecast.mjd <- reactive({
+    read.csv(paste0(prefix, "rtoday/start_forecast.csv"))$start.forecast
+  })
+
+  output$forecast.mjd <- reactive({
+    forecast.mjd()
+  })
+
+  output$forecast.date <- reactive({
+    mjd_to_date(forecast.mjd())
+  })
+
   output$downloadForecast365 <- downloadHandler(
     filename <- function() {
       paste0(forecast.mjd(), "_ssa_spbu_365.txt")
     },
-    
+
     content <- function(file) {
       file.copy(paste0(prefix, "rssa/", forecast.mjd(), "_ssa_spbu_365.txt"), file)
     },
     contentType = "text/plain"
   )
-  
+
   output$help <- downloadHandler(
     filename <- function() {
       "help.pdf"
@@ -55,34 +58,34 @@ server <- function(input, output, session) {
       file.copy("www/help.pdf", file)
     }
   )
-  
+
   output$downloadForecast365atDate <- downloadHandler(
     filename <- function() {
       paste0(get_compare_mjd(), "_ssa_spbu_365.txt")
     },
-    
+
     content <- function(file) {
       file.copy(paste0(prefix, "rssa/", get_compare_mjd(), "_ssa_spbu_365.txt"), file)
     },
     contentType = "text/plain"
   )
-  
+
   output$downloadForecast90 <- downloadHandler(
     filename <- function() {
       paste0(forecast.mjd(), "_ssa_spbu_90.txt")
     },
-    
+
     content <- function(file) {
       file.copy(paste0(prefix, "rssa/", forecast.mjd(), "_ssa_spbu_90.txt"), file)
     },
     contentType = "text/plain"
   )
-  
+
   get_compare_mjd <- reactive({
     mjd <- as.integer(as.Date(input$date_compare) - as.Date("1858-11-17"))
     mjd
   })
-  
+
   get_ssa <- reactive({
     mjd <- get_compare_mjd()
     ssa.forecast <- tryCatch({read.table(paste0(prefix, "rssa/", mjd, "_ssa_spbu_365.txt"))},
@@ -93,83 +96,63 @@ server <- function(input, output, session) {
     ssa.forecast
   })
 
+  get_pul <- function(x, mjd) {
+    pul <- tryCatch({read.table(paste0(prefix, "pul/", mjd - 1, "_", x, "_pul.txt", sep = ""), skip=1)},
+                       silent = TRUE, condition = function(err) { NA } )
+    if(!is.na(pul)) {
+      colnames(pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
+      pul$dX <- pul$dX * 10**(-3)
+      pul$dY <- pul$dY * 10**(-3)
+      pul$LOD <- pul$LOD * 10**(-3)
+    }
+    pul
+  }
+
   # check if these files do exist!
   get_pul_am <- reactive({
-    mjd <- get_compare_mjd()
-    am_pul <- tryCatch({read.table(paste0(prefix, "pul/", mjd - 1, "_am_pul.txt", sep = ""), skip=1)},
-             silent = TRUE, condition = function(err) { NA } )
-    if(!is.na(am_pul)) {
-      colnames(am_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
-      am_pul$dX <- am_pul$dX * 10**(-3)
-      am_pul$dY <- am_pul$dY * 10**(-3)
-      am_pul$LOD <- am_pul$LOD * 10**(-3) 
-    }
-    am_pul
+    get_pul("am", get_compare_mjd())
   })
 
   get_pul_e1 <- reactive({
-    mjd <- get_compare_mjd()
-    e1_pul <- tryCatch({read.table(paste0(prefix, "pul/", mjd - 1, "_e1_pul.txt", sep = ""), skip=1)},
-             silent = TRUE, condition = function(err) { NA } )
-    if(!is.na(e1_pul)) {
-      colnames(e1_pul) <- c("MJD", "x", "y", "TAI-UT1", "LOD", "dX", "dY")
-      e1_pul$dX <- e1_pul$dX * 10**(-3)
-      e1_pul$dY <- e1_pul$dY * 10**(-3)
-      e1_pul$LOD <- e1_pul$LOD * 10**(-3)  
-    }
-    e1_pul
+    get_pul("e1", get_compare_mjd())
   })
-  
+
+  get_bull_a <- function(mjd_getter) {
+    mjd <- mjd_getter()
+    date <- as.Date(mjd_to_date(mjd))
+    # seek for previous friday
+    weekday <- as.numeric(format(date, '%u'))
+    date <- date - (weekday + 2) %% 7
+
+    week <- as.numeric(format(date, '%V'))
+    year <- as.numeric(format(date, '%Y'))
+    volume <- year - 1987
+    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
+    ba <- tryCatch({read.csv(filename, sep=";")},
+                   silent = TRUE, condition = function(err) { NA } )
+    if(!is.na(ba)) {
+      colnames(ba) <- c("MJD", "Year", "Month", "Day", "Type", "x", "sigma_x", "y", "sigma_y",
+                        "Type.1", "LOD", "sigma_UT1.UTC", "LOD2", "sigma_LOD", "Type.2",
+                        "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
+                        "dY", "sigma_dY")
+      ind <- which(ba[, "MJD"] == mjd)
+      ba <- ba[ind:nrow(ba), ]
+
+      lod <- -diff(ba[, "LOD"])
+      leap <- abs(lod) > 0.8 # this is an indicator of leap second
+      lod[leap] <- lod[leap] + 1
+
+      ba[, "LOD"] <- c(lod[1], lod) # duplicate the first value because diff eats it
+    }
+    ba
+  }
+
   get_a <- reactive({
-    mjd <- get_compare_mjd()
-    date <- as.Date(mjd_to_date(mjd))
-    # seek for previous friday
-    weekday <- as.numeric(format(date, '%u'))
-    date <- date - (weekday + 2) %% 7
-    
-    week <- as.numeric(format(date, '%V'))
-    year <- as.numeric(format(date, '%Y'))
-    volume <- year - 1987
-    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
-    ba <- tryCatch({read.csv(filename, sep=";")},
-                   silent = TRUE, condition = function(err) { NA } )
-    if(!is.na(ba)) {
-      colnames(ba) <- c("MJD", "Year", "Month", "Day", "Type", "x", "sigma_x", "y", "sigma_y",
-                        "Type.1", "LOD", "sigma_UT1.UTC", "LOD2", "sigma_LOD", "Type.2",
-                        "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
-                        "dY", "sigma_dY")
-      ind <- which(ba[, "MJD"] == mjd)
-      ba <- ba[ind:nrow(ba), ]
-      lod <- -diff(ba[, "LOD"])
-      ba[, "LOD"] <- c(lod[1], lod)
-    }
-    ba
+    get_bull_a(get_compare_mjd)
   })
-  
+
   get_a_today <- reactive({
-    mjd <- mjd.today()
-    date <- as.Date(mjd_to_date(mjd))
-    # seek for previous friday
-    weekday <- as.numeric(format(date, '%u'))
-    date <- date - (weekday + 2) %% 7
-    
-    week <- as.numeric(format(date, '%V'))
-    year <- as.numeric(format(date, '%Y'))
-    volume <- year - 1987
-    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
-    ba <- tryCatch({read.csv(filename, sep=";")},
-                   silent = TRUE, condition = function(err) { NA } )
-    if(!is.na(ba)) {
-      colnames(ba) <- c("MJD", "Year", "Month", "Day", "Type", "x", "sigma_x", "y", "sigma_y",
-                        "Type.1", "LOD", "sigma_UT1.UTC", "LOD2", "sigma_LOD", "Type.2",
-                        "dPsi", "sigma_dPsi", "dEpsilon", "sigma_dEpsilon", "dX", "sigma_dX",
-                        "dY", "sigma_dY")
-      ind <- which(ba[, "MJD"] == mjd)
-      ba <- ba[ind:nrow(ba), ]
-      lod <- -diff(ba[, "LOD"])
-      ba[, "LOD"] <- c(lod[1], lod)
-    }
-    ba
+    get_bull_a(mjd.today)
   })
 
   get_final <- reactive({
@@ -183,17 +166,17 @@ server <- function(input, output, session) {
     }
     c04
   })
-  
+
   eop.list <- list("x", "y", "LOD", "dX", "dY")
   days.len <- list(365)
-  
+
   legend.names <- c("C04", "SSA", "Pul AM", "Bull A")
   legend.colors <- c("black", "blue", "orange", "purple")
 
   series.list <- c("ssa", "pul_am", "ba")
   series.names <- c("SSA", "Pul AM", "Bull A")
   series.getters <- list(get_ssa, get_pul_am, get_a)
-  
+
   lapply(days.len, function(days) {
     lapply(eop.list, function(eop) {
       output[[paste0(eop, "_today_", days)]] <- renderPlotly({
@@ -206,34 +189,34 @@ server <- function(input, output, session) {
           tm <- seq(0, days-1, by = 1)
           ticks <- start.date + tm
         }
-        
+
         ssa.forecast <- read.table(paste0(prefix, "rtoday/ssa_spbu_", days, ".txt"))
         colnames(ssa.forecast) <- c("MJD", "x", "y", "LOD", "dX", "dY")
-        
+
         ba <- get_a_today()
         n <- nrow(ba)
         ba.ticks <- ticks[1:n]
-        
-        plot_ly(y=ssa.forecast[[eop]], x=~ticks, type="scatter", mode="lines", name = "SSA") %>% 
+
+        plot_ly(y=ssa.forecast[[eop]], x=~ticks, type="scatter", mode="lines", name = "SSA") %>%
           add_trace(y = ba[, eop], x=~ba.ticks, name = "Bulletin A") %>%
-          layout(xaxis=list(title=lab)) %>% 
+          layout(xaxis=list(title=lab)) %>%
           layout(yaxis=list(title=eop))
-      })  
+      })
     })
-    
+
     lapply(eop.list, function(eop) {
       output[[paste0(eop, "_dists_", days)]] <- renderUI({
         L_list <- read.csv(paste0(prefix, "rtoday/", eop, "_", days, "_L_list.csv"))
         do.call(tabsetPanel, lapply(L_list$x, function(L) {
           dists <- read.csv(paste0(prefix, "rtoday/", eop, "_", days, "_", L, "_dists.csv"))
           output[[paste0(eop, "_dists_", days, "_", L)]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
-                                                                           layout(xaxis=list(title="Number of components")) %>% 
+                                                                           layout(xaxis=list(title="Number of components")) %>%
                                                                            layout(yaxis=list(title="MSE", type="log")))
           tabPanel(paste0("L = ", L), plotlyOutput(paste0(eop, "_dists_", days, "_", L)))
         }))
       })
     })
-    
+
     output[[paste0("tabset_eop_", days)]] <- renderUI({
       do.call(tabsetPanel, lapply(eop.list, function(eop) {
         tabPanel(eop,
@@ -247,7 +230,7 @@ server <- function(input, output, session) {
         )
       }))
     })
-    
+
     lapply(eop.list, function(eop) {
       output[[paste0(eop, "_params_", days)]] <- reactive({
         params <- read.csv(paste0(prefix, "rtoday/", days, "params.csv"))
@@ -255,24 +238,24 @@ server <- function(input, output, session) {
       })
     })
   })
-  
+
   output[["help_dists"]] <- renderUI({
     days <- 365
     L_list <- read.csv(paste0(prefix, "rtoday/", input$generateEOP, "_", days, "_L_list.csv"))
     do.call(tabsetPanel, lapply(L_list$x, function(L) {
       dists <- read.csv(paste0(prefix, "rtoday/", input$generateEOP, "_", days, "_", L, "_dists.csv"))
       output[[paste0(input$generateEOP, "_help_dists_", days, "_", L)]] <- renderPlotly(plot_ly(dists, y=~x, x=~X, type="scatter", mode="markers") %>%
-                                                                       layout(xaxis=list(title="Number of components")) %>% 
+                                                                       layout(xaxis=list(title="Number of components")) %>%
                                                                        layout(yaxis=list(title="MSE", type="log")))
       tabPanel(paste0("L = ", L), plotlyOutput(paste0(input$generateEOP, "_help_dists_", days, "_", L)))
     }))
   })
-  
+
   lapply(eop.list, function(eop) {
     output[[paste0(eop, "_comparison")]] <- renderPlotly({
       mjd <- get_compare_mjd()
       ind <- mjd - 37664
-      
+
       if(input$"mjd_compare_labels") {
         lab <- "MJD"
         ticks <- mjd:(mjd+364)
@@ -284,7 +267,7 @@ server <- function(input, output, session) {
       }
 
       p <- plot_ly(x = ~ticks, y = get_final()[(ind):(ind + 364), eop], type = 'scatter', mode = 'lines', name = 'C04') %>%
-        layout(xaxis=list(title=lab)) %>% 
+        layout(xaxis=list(title=lab)) %>%
         layout(yaxis=list(title=eop))
       n <- length(series.list)
       for(i in 1:n) {
@@ -301,7 +284,7 @@ server <- function(input, output, session) {
           }
         }
       }
-      
+
       # if(length(input$combineSeries) > 1) {
       #   series <- rep(0, 365)
       #   name <- c()
@@ -324,11 +307,11 @@ server <- function(input, output, session) {
       p
     })
   })
-  
+
   MSE <- function(a, b, n) {
     sum((a - b)**2) / n
   }
-  
+
   output$comparison_table <- DT::renderDataTable({
     df <- data.frame(x=double(), y=double(), LOD=double(), dX=double(), dY=double())
     mjd <- get_compare_mjd()
@@ -398,10 +381,10 @@ server <- function(input, output, session) {
                   )) %>% DT::formatRound(columns=c("x", "y", "LOD", "dX", "dY"), digits=12)
 
   }, include.rownames=TRUE, digits=10)
-  
+
   values <- reactiveValues()
   values$showDownloadButton <- FALSE
-  
+
   output$showDownloadButton <- reactive({
     values$showDownloadButton
   })
@@ -410,10 +393,10 @@ server <- function(input, output, session) {
     values$showDownloadButton
     values$generatedForecast
   })
-  
+
   observeEvent(input$generateForecast, {
     values$showDownloadButton <- TRUE
-    
+
     date.string <- format(Sys.time(), "%Y-%m-%d")
     start.forecast <- as.integer(as.Date(date.string) - as.Date("1858-11-17"))
 
@@ -457,7 +440,7 @@ server <- function(input, output, session) {
     colnames(df) <- c("MJD", input$generateEOP)
     values$generatedForecast <- df
   })
-  
+
   output[["plot_generated"]] <- renderPlotly({
     validate(
       need(values$generatedForecast, "Generate your forecast")
@@ -471,26 +454,26 @@ server <- function(input, output, session) {
       tm <- seq(0, input$genDays-1, by = 1)
       ticks <- start.date + tm
     }
-    
+
     gen.forecast <- values$generatedForecast
     colnames(gen.forecast) <- c("MJD", input$generateEOP)
-    
-    plot_ly(y=gen.forecast[[input$generateEOP]], x=~ticks, type="scatter", mode="lines") %>% 
-      layout(xaxis=list(title=lab)) %>% 
+
+    plot_ly(y=gen.forecast[[input$generateEOP]], x=~ticks, type="scatter", mode="lines") %>%
+      layout(xaxis=list(title=lab)) %>%
       layout(yaxis=list(title=input$generateEOP))
-  })  
-  
+  })
+
   output$downloadGeneratedForecast <- downloadHandler(
     filename <- function() {
       paste0(forecast.mjd(), "_ssa_spbu_", input$genDays, ".csv")
     },
-    
+
     content <- function(file) {
       write.csv(values$generatedForecast, file)
     },
     contentType = "text/csv"
   )
-  
+
   outputOptions(output, "showDownloadButton", suspendWhenHidden=FALSE)
 }
 
@@ -603,7 +586,7 @@ ui = tagList(
     ),
     tabPanel("About",
              mainPanel(
-               tags$p("This site was created as a part of ", a("Graduation Project (in Russian, 2017)", href="thesis.pdf"), 
+               tags$p("This site was created as a part of ", a("Graduation Project (in Russian, 2017)", href="thesis.pdf"),
                " of Grigory Okhotnikov, Master student of Saint Petersburg State University."),
                p("Scientific supervisor: Associate Professor Nina Golyandina, PhD, SPbU."),
                h4("Sources of forecasts for comparison:"),
@@ -615,9 +598,9 @@ ui = tagList(
                tags$ol(
                  tags$li(a(href = "https://www.crcpress.com/Analysis-of-Time-Series-Structure-SSA-and-Related-Techniques/Golyandina-Nekrutkin-Zhigljavsky/p/book/9781584881940",
                            "Analysis of Time Series Structure: SSA and Related Techniques - Nina Golyandina, Vladimir Nekrutkin, Anatoly Zhigljavsky")),
-                 tags$li(a(href = "http://www.gistatgroup.com/cat/", "Caterpillar-SSA website")), 
+                 tags$li(a(href = "http://www.gistatgroup.com/cat/", "Caterpillar-SSA website")),
                  tags$li(a(href = "https://github.com/asl/rssa", "Rssa package GitHub repository")),
-                 tags$li(a(href = "https://hpiers.obspm.fr/iers/eop/eopc04/C04.guide.pdf", 
+                 tags$li(a(href = "https://hpiers.obspm.fr/iers/eop/eopc04/C04.guide.pdf",
                            "Earth Orientation Parameters C04 Guide"))
                ),
                tags$hr(),
