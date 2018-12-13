@@ -1,9 +1,14 @@
 prefix <- "/srv/shiny-server/eop/"
 
+# deprecated urls
+# url_finals2000a <- "https://datacenter.iers.org/eop/-/somos/5Rgv/latestXL/13/finals2000A.daily/csv"
+# url_finals_daily <- "https://datacenter.iers.org/eop/-/somos/5Rgv/latestXL/12/finals.daily/csv"
+# url_gpsrapid <- "https://datacenter.iers.org/eop/-/somos/5Rgv/latestXL/14/gpsrapid.daily/csv"
+
 # urls
-url_finals2000a <- "https://datacenter.iers.org/eop/-/somos/5Rgv/latestXL/13/finals2000A.daily/csv"
-url_finals_daily <- "https://datacenter.iers.org/eop/-/somos/5Rgv/latestXL/12/finals.daily/csv"
-url_gpsrapid <- "https://datacenter.iers.org/eop/-/somos/5Rgv/latestXL/14/gpsrapid.daily/csv"
+url_finals2000a <- "https://datacenter.iers.org/data/csv/finals2000A.daily.csv"
+url_finals_daily <- "https://datacenter.iers.org/data/csv/finals.daily.csv"
+url_gpsrapid <- "https://datacenter.iers.org/data/csv/gpsrapid.daily.csv"
 
 # date of today
 date.string <- format(Sys.time(), "%Y-%m-%d")

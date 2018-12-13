@@ -127,7 +127,7 @@ server <- function(input, output, session) {
     week <- as.numeric(format(date, '%V'))
     year <- as.numeric(format(date, '%Y'))
     volume <- year - 1987
-    filename <- sprintf("%sba/bulletina-%s-%03d.txt", prefix, tolower(as.roman(volume)), week)
+    filename <- sprintf("%sba/bulletina-%s-%03d.csv", prefix, tolower(as.roman(volume)), week)
     ba <- tryCatch({read.csv(filename, sep=";")},
                    silent = TRUE, condition = function(err) { NA } )
     if(!is.na(ba)) {
